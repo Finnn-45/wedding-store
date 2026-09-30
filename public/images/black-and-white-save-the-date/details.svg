@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" width="1600" height="1000" role="img" aria-label="Yuki &amp; Ren wedding details page"><rect x="0" y="0" width="1600" height="1000" fill="#f7f7f6"/>
+     
+  <rect x="0" y="0" width="1600" height="5" fill="#141414" opacity="0.9"/>
+  <text x="72" y="96" fill="#141414" font-family="Georgia, 'Times New Roman', serif" font-size="30" font-weight="400" text-anchor="start" letter-spacing="8" opacity="1">Y &amp; R</text>
+  <text x="1528" y="96" fill="#7c7c7a" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="400" text-anchor="end" letter-spacing="3" opacity="1">OUR STORY   DETAILS   GALLERY   RSVP</text>
+  <rect x="0" y="132" width="1600" height="1" fill="#e0e0de"/>
+     <text x="800" y="262" fill="#141414" font-family="Georgia, 'Times New Roman', serif" font-size="54" font-weight="400" text-anchor="middle" letter-spacing="0" opacity="1">WEDDING DETAILS</text>
+     <text x="800" y="306" fill="#7c7c7a" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="400" text-anchor="middle" letter-spacing="6" opacity="1">22 . 11 . 2026</text>
+     <rect x="130" y="400" width="400" height="420" fill="#eeeeec" rx="2" stroke="#e0e0de"/>
+                 <rect x="130" y="400" width="400" height="4" fill="#141414" opacity="0.8"/>
+                 <text x="178" y="496" fill="#7c7c7a" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="400" text-anchor="start" letter-spacing="4" opacity="1">CEREMONY</text>
+                 <rect x="178" y="536" width="300" height="7" fill="#141414" rx="4" opacity="0.42"/><rect x="178" y="560" width="198" height="7" fill="#141414" rx="4" opacity="0.42"/>
+                 <rect x="178" y="622" width="300" height="1" fill="#e0e0de"/>
+                 <rect x="178" y="666" width="300" height="7" fill="#141414" rx="4" opacity="0.3"/><rect x="178" y="690" width="300" height="7" fill="#141414" rx="4" opacity="0.3"/><rect x="178" y="714" width="198" height="7" fill="#141414" rx="4" opacity="0.3"/><rect x="590" y="400" width="400" height="420" fill="#eeeeec" rx="2" stroke="#e0e0de"/>
+                 <rect x="590" y="400" width="400" height="4" fill="#141414" opacity="0.8"/>
+                 <text x="638" y="496" fill="#7c7c7a" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="400" text-anchor="start" letter-spacing="4" opacity="1">RECEPTION</text>
+                 <rect x="638" y="536" width="300" height="7" fill="#141414" rx="4" opacity="0.42"/><rect x="638" y="560" width="198" height="7" fill="#141414" rx="4" opacity="0.42"/>
+                 <rect x="638" y="622" width="300" height="1" fill="#e0e0de"/>
+                 <rect x="638" y="666" width="300" height="7" fill="#141414" rx="4" opacity="0.3"/><rect x="638" y="690" width="300" height="7" fill="#141414" rx="4" opacity="0.3"/><rect x="638" y="714" width="198" height="7" fill="#141414" rx="4" opacity="0.3"/><rect x="1050" y="400" width="400" height="420" fill="#eeeeec" rx="2" stroke="#e0e0de"/>
+                 <rect x="1050" y="400" width="400" height="4" fill="#141414" opacity="0.8"/>
+                 <text x="1098" y="496" fill="#7c7c7a" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="400" text-anchor="start" letter-spacing="4" opacity="1">DRESS CODE</text>
+                 <rect x="1098" y="536" width="300" height="7" fill="#141414" rx="4" opacity="0.42"/><rect x="1098" y="560" width="198" height="7" fill="#141414" rx="4" opacity="0.42"/>
+                 <rect x="1098" y="622" width="300" height="1" fill="#e0e0de"/>
+                 <rect x="1098" y="666" width="300" height="7" fill="#141414" rx="4" opacity="0.3"/><rect x="1098" y="690" width="300" height="7" fill="#141414" rx="4" opacity="0.3"/><rect x="1098" y="714" width="198" height="7" fill="#141414" rx="4" opacity="0.3"/></svg>

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" width="1600" height="1000" role="img" aria-label="Freya &amp; Oskar our story page"><rect x="0" y="0" width="1600" height="1000" fill="#f3f5ef"/>
+     
+  <rect x="0" y="0" width="1600" height="5" fill="#4f6b45" opacity="0.9"/>
+  <text x="72" y="96" fill="#26301f" font-family="Georgia, 'Times New Roman', serif" font-size="30" font-weight="400" text-anchor="start" letter-spacing="8" opacity="1">F &amp; O</text>
+  <text x="1528" y="96" fill="#78836c" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="400" text-anchor="end" letter-spacing="3" opacity="1">OUR STORY   DETAILS   GALLERY   RSVP</text>
+  <rect x="0" y="132" width="1600" height="1" fill="#d9e0d0"/>
+     
+  <defs>
+    <linearGradient id="story" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#dde6d4"/>
+      <stop offset="1" stop-color="#c9d8bf"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="133" width="720" height="867" fill="url(#story)"/>
+  <circle cx="360" cy="566.5" r="94" fill="none" stroke="#eaf0e4" stroke-width="1.5" opacity="0.6"/>
+     <text x="820" y="300" fill="#78836c" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="400" text-anchor="start" letter-spacing="5" opacity="1">OUR STORY</text>
+     <text x="820" y="396" fill="#26301f" font-family="Georgia, 'Times New Roman', serif" font-size="62" font-weight="400" text-anchor="start" letter-spacing="0" opacity="1">How we found</text>
+     <text x="820" y="466" fill="#26301f" font-family="Georgia, 'Times New Roman', serif" font-size="62" font-weight="400" text-anchor="start" letter-spacing="0" opacity="1">each other</text>
+     <rect x="820" y="530" width="620" height="7" fill="#26301f" rx="4" opacity="0.42"/><rect x="820" y="554" width="620" height="7" fill="#26301f" rx="4" opacity="0.42"/><rect x="820" y="578" width="620" height="7" fill="#26301f" rx="4" opacity="0.42"/><rect x="820" y="602" width="409" height="7" fill="#26301f" rx="4" opacity="0.42"/>
+     <text x="820" y="724" fill="#4f6b45" font-family="Georgia, 'Times New Roman', serif" font-size="30" font-weight="400" font-style="italic" text-anchor="start" letter-spacing="0" opacity="1">“A garden, a long summer, a promise.”</text>
+     <rect x="820" y="790" width="90" height="1" fill="#d9e0d0"/></svg>

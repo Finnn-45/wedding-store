@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1500" width="1200" height="1500" role="img" aria-label="Custom wedding website design"><rect x="0" y="0" width="1200" height="1500" fill="#f5f4f2"/>
+     <text x="60" y="108" fill="#7e7b75" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="400" text-anchor="start" letter-spacing="5" opacity="1">BLANC WEDDINGS</text>
+     <text x="60" y="330" fill="#1f1e1c" font-family="Georgia, 'Times New Roman', serif" font-size="108" font-weight="400" text-anchor="start" letter-spacing="0" opacity="1">Designed</text>
+     <text x="60" y="442" fill="#5c5a55" font-family="Georgia, 'Times New Roman', serif" font-size="108" font-weight="400" font-style="italic" text-anchor="start" letter-spacing="0" opacity="1">around you</text>
+     <rect x="60" y="510" width="620" height="7" fill="#1f1e1c" rx="4" opacity="0.42"/><rect x="60" y="534" width="620" height="7" fill="#1f1e1c" rx="4" opacity="0.42"/><rect x="60" y="558" width="409" height="7" fill="#1f1e1c" rx="4" opacity="0.42"/>
+     <rect x="60" y="610" width="90" height="1" fill="#e0deda"/>
+     
+  <defs>
+    <linearGradient id="cu1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e4e2de"/>
+      <stop offset="1" stop-color="#d3d0cb"/>
+    </linearGradient>
+  </defs>
+  <rect x="60" y="680" width="1080" height="380" fill="url(#cu1)" rx="2"/>
+  <circle cx="600" cy="870" r="49" fill="none" stroke="#efeeec" stroke-width="1.5" opacity="0.6"/>
+     
+  <defs>
+    <linearGradient id="cu2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d3d0cb"/>
+      <stop offset="1" stop-color="#efeeec"/>
+    </linearGradient>
+  </defs>
+  <rect x="60" y="1092" width="520" height="320" fill="url(#cu2)" rx="2"/>
+  <circle cx="320" cy="1252" r="42" fill="none" stroke="#e4e2de" stroke-width="1.5" opacity="0.6"/>
+     
+  <defs>
+    <linearGradient id="cu3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e4e2de"/>
+      <stop offset="1" stop-color="#d3d0cb"/>
+    </linearGradient>
+  </defs>
+  <rect x="620" y="1092" width="520" height="320" fill="url(#cu3)" rx="2"/>
+  <circle cx="880" cy="1252" r="42" fill="none" stroke="#efeeec" stroke-width="1.5" opacity="0.6"/>
+     <text x="60" y="1470" fill="#7e7b75" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="400" text-anchor="start" letter-spacing="5" opacity="1">M &amp; L</text></svg>
