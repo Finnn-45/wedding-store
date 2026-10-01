@@ -15,8 +15,13 @@ import { styleLabels, typeLabels } from "@/data/products";
 import { styleSlugs } from "@/data/styles";
 import { formatPriceParts, isOnSale } from "@/lib/catalog";
 import { productRepository } from "@/lib/repositories";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export async function generateStaticParams() {
+  // See the note in src/app/demo/[slug]/page.tsx: with Supabase configured the
+  // repository reads request cookies, which is not allowed here (build time,
+  // no HTTP request), so the slug is rendered on demand instead.
+  if (isSupabaseConfigured()) return [];
   const products = await productRepository.list();
   return products.map((product) => ({ slug: product.slug }));
 }

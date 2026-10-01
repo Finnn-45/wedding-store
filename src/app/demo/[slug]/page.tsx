@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { productRepository } from "@/lib/repositories";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 /**
  * Public demo page.
@@ -14,6 +15,11 @@ import { productRepository } from "@/lib/repositories";
  * template a customer buys is never reachable from here.
  */
 export async function generateStaticParams() {
+  // With Supabase as the source of truth the repository reads the request
+  // cookies (RLS), and `cookies()` cannot run inside generateStaticParams —
+  // it executes at build time, without an HTTP request, and fails the build.
+  // Returning no params keeps the route valid: every slug renders on demand.
+  if (isSupabaseConfigured()) return [];
   const products = await productRepository.list();
   return products.map((product) => ({ slug: product.slug }));
 }
