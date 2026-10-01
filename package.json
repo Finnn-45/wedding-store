@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "mockups": "node scripts/generate-mockups.mjs"
+    "mockups": "node scripts/generate-mockups.mjs",
+    "db:check": "node scripts/check-supabase.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

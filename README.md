@@ -31,6 +31,7 @@ npm start          # serve the production build
 npm run lint       # eslint
 npm run typecheck  # tsc --noEmit
 npm run mockups    # regenerate the demo preview SVGs
+npm run db:check   # verify .env.local against a real Supabase project
 ```
 
 ## Routes
@@ -108,13 +109,27 @@ the token on every request and then redirect server-side.
   knows an email can list those orders. Replace with Supabase Auth.
 - `hello@blancweddings.com` and the Canva/PDF URLs are placeholders.
 - Rate limits: checkout 30 / 10 min per IP, delivery and enquiry routes are
-  limited too. In production put a real limiter at the edge.## Supabase-ready schema (NOT implemented)
+  limited too. In production put a real limiter at the edge.
+
+## Supabase schema
+
+`supabase/migrations/0001_init.sql` holds the whole schema: nine tables, two
+storage buckets (`blanc-public`, `blanc-private`) and row level security. It is
+**written but not applied** - until `.env.local` contains a real project URL and
+keys the app keeps serving the mock repositories (see `.env.example`). Check the
+keys and the schema in one go:
+
+```bash
+npm run db:check
+```
+
 
 ```
 products            id, slug, name, short_description, description, type, style,
                     price, compare_at_price, currency, cover_image, published,
                     demo_url, created_at
 product_images      id, product_id, url, alt, position
+profiles            id, full_name, email, whatsapp, role, created_at, updated_at
 orders              id, order_number, customer_name, customer_email,
                     customer_whatsapp, customer_notes, status, subtotal,
                     discount, total, currency, payment_ref, created_at, paid_at
@@ -122,8 +137,11 @@ order_items         id, order_id, product_id, product_name, product_slug,
                     price, quantity
 delivery_assets     id, product_id, canva_template_url, setup_pdf_path
 purchase_access     id, order_id, product_id, token_hash, expires_at, revoked
-custom_inquiries    id, name, email, whatsapp, wedding_date, style, budget,
-                    timeline, notes, created_at
+downloads           id, order_id, user_id, product_id, asset_type, downloaded_at
+admin_audit_logs    id, admin_user_id, action, entity_type, entity_id, metadata,
+                    created_at
+custom_inquiries    not in the migration yet - the enquiry form emails the
+                    studio instead of storing rows
 ```
 
 Order items snapshot `product_name` and `price` at purchase time, so a later
