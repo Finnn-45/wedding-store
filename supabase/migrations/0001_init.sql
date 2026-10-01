@@ -24,6 +24,13 @@
 
 create extension if not exists "pgcrypto";
 
+-- PostgreSQL validates the body of a LANGUAGE sql function when it is created.
+-- is_admin() reads public.profiles, so it is declared AFTER that table further
+-- down (see the profiles section). This switch is belt and braces: it stops
+-- CREATE FUNCTION from resolving table names too early, so the script can never
+-- abort with 42P01 again.
+set check_function_bodies = off;
+
 -- --------------------------------------------------------------------------
 -- updated_at helper
 -- --------------------------------------------------------------------------
@@ -35,22 +42,6 @@ begin
   new.updated_at := now();
   return new;
 end;
-$$;
-
--- --------------------------------------------------------------------------
--- is_admin() — the single source of truth for "is this user an admin"
--- --------------------------------------------------------------------------
-create or replace function public.is_admin()
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (
-    select 1 from public.profiles
-    where id = auth.uid() and role = 'admin'
-  );
 $$;
 
 -- ==========================================================================
@@ -74,6 +65,25 @@ create index if not exists profiles_role_idx on public.profiles (role);
 create trigger profiles_set_updated_at
   before update on public.profiles
   for each row execute function public.set_updated_at();
+
+-- --------------------------------------------------------------------------
+-- is_admin() — the single source of truth for "is this user an admin"
+-- --------------------------------------------------------------------------
+-- Declared AFTER public.profiles on purpose: a LANGUAGE sql function body is
+-- validated at CREATE time, so referencing the table before it exists aborts
+-- the whole migration with 42P01 ("relation public.profiles does not exist").
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.profiles
+    where id = auth.uid() and role = 'admin'
+  );
+$$;
 
 -- Auto-create a profile on signup, ALWAYS as 'customer'. Promotion to admin
 -- is a separate, deliberate, server-side operation.
