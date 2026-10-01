@@ -38,6 +38,7 @@ export type CheckoutInput = {
 export type CheckoutErrorCode =
   | "invalid_request"
   | "invalid_items"
+  | "payments_disabled"
   | "server_error";
 
 export type CheckoutResult =
@@ -182,6 +183,20 @@ function orderId(): string {
 }
 
 
+/**
+ * Whether the wired payment service (the mock) may run.
+ *
+ * In development it always may. In a production build the mock would mark every
+ * order paid and issue the paid files to anyone who checks out, so it only runs
+ * when ENABLE_MOCK_CHECKOUT is explicitly "true" - e.g. to demo the full
+ * purchase flow on a private deployment. A real provider (Stripe / Midtrans /
+ * Xendit + webhook) replaces this check along with the service itself.
+ */
+function isMockCheckoutEnabled(): boolean {
+  if (process.env.NODE_ENV !== "production") return true;
+  return process.env.ENABLE_MOCK_CHECKOUT === "true";
+}
+
 export function createCheckoutService({
   products,
   orders,
@@ -192,6 +207,17 @@ export function createCheckoutService({
 }: CheckoutDependencies): CheckoutService {
   return {
     async placeOrder(input) {
+      // Fail fast, before any catalogue read or database write: the only
+      // payment service wired in below is the mock, and in production it must
+      // not run unless explicitly enabled (see isMockCheckoutEnabled).
+      if (!isMockCheckoutEnabled()) {
+        console.warn(
+          "[checkout] rejected: mock checkout is disabled in production. " +
+            "Set ENABLE_MOCK_CHECKOUT=true to allow demo checkouts.",
+        );
+        return { ok: false, code: "payments_disabled" };
+      }
+
       try {
         // 1. Resolve every line against the server catalogue. Unknown or
         //    non-purchasable products fail the whole order — the client

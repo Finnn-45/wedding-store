@@ -75,7 +75,9 @@ export function CheckoutView() {
         setError(
           response.status === 429
             ? "Too many attempts. Please wait a moment and try again."
-            : "Something went wrong. Please try again.",
+            : payload?.code === "payments_disabled"
+              ? "Checkout is not available right now. Please contact us to place your order."
+              : "Something went wrong. Please try again.",
         );
         return;
       }

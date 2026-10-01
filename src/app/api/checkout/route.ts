@@ -64,9 +64,15 @@ export async function POST(request: Request) {
 
   if (!result.ok) {
     // Generic codes only — no internal details leave the server (§13).
+    // 503 marks "checkout switched off in this deployment" so the client can
+    // say so plainly, instead of blaming a transient failure.
     return jsonResponse(
       result,
-      result.code === "server_error" ? 500 : 400,
+      result.code === "server_error"
+        ? 500
+        : result.code === "payments_disabled"
+          ? 503
+          : 400,
     );
   }
 
