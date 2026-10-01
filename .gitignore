@@ -43,3 +43,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local environment - never commit
+.env.local
+.env*.local
+
+# scratch / local working files
+/tmp/

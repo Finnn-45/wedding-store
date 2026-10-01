@@ -120,16 +120,16 @@ export function filterProducts(filters: ShopFilters): Product[] {
   return sortProducts(filtered, filters.sort ?? "featured");
 }
 
-/** Styles offered in the shop filter row. */
+/**
+ * Styles offered in the shop filter row.
+ *
+ * Only styles the live catalogue actually contains are listed — a filter that
+ * can never return a product is a dead end for the customer.
+ */
 export const shopStyleFilters: ProductStyle[] = [
-  "modern",
   "minimal",
-  "romantic",
-  "editorial",
   "garden",
-  "classic",
-  "black-white",
-  "colorful",
+  "romantic",
 ];
 
 export type ShopTypeFilter = {
@@ -140,8 +140,6 @@ export type ShopTypeFilter = {
 export const shopTypeFilters: ShopTypeFilter[] = [
   { label: "All", value: "all" },
   { label: "Wedding Websites", value: "wedding-website" },
-  { label: "Save the Date", value: "save-the-date" },
-  { label: "Bundles", value: "bundle" },
 ];
 
 export type ShopSortOption = {

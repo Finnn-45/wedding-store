@@ -1,12 +1,16 @@
 /**
- * Composition root for the data access layer.
+ * Composition root for the data access layer — and the ONE place that decides
+ * which implementation is live.
  *
- * The UI imports repository TYPES and this module's singletons — never the
- * mock implementations directly. To move to Supabase later, swap the three
- * bindings below for their Supabase counterparts; no component changes.
+ *   Supabase credentials present  → Supabase is the source of truth
+ *   No credentials (fresh clone)  → the local mock repositories
  *
- * Server only: client components must never import this module (the order and
- * purchase-access repositories touch the file system).
+ * The UI imports repository TYPES and these singletons, never the
+ * implementations. Because both sides satisfy the same interfaces, no
+ * component changes when the switch flips, and the two systems can never
+ * silently compete with each other.
+ *
+ * Server only: client components must never import this module.
  */
 import { mockOrderRepository } from "@/lib/mock/order-repository";
 import { mockProductRepository } from "@/lib/mock/product-repository";
@@ -16,6 +20,10 @@ import type {
   PurchaseAccessRepository,
 } from "@/lib/repositories/order-repository";
 import type { ProductRepository } from "@/lib/repositories/product-repository";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { supabaseOrderRepository } from "@/lib/supabase/repositories/order-repository";
+import { supabaseProductRepository } from "@/lib/supabase/repositories/product-repository";
+import { supabasePurchaseAccessRepository } from "@/lib/supabase/repositories/purchase-access-repository";
 
 export type {
   Order,
@@ -32,8 +40,18 @@ export type {
   ProductType,
 } from "@/lib/repositories/product-repository";
 
-export const productRepository: ProductRepository = mockProductRepository;
-export const orderRepository: OrderRepository = mockOrderRepository;
-export const purchaseAccessRepository: PurchaseAccessRepository =
-  mockPurchaseAccessRepository;
+/** True when Supabase is configured and therefore authoritative. */
+export const usingSupabase = isSupabaseConfigured();
+
+export const productRepository: ProductRepository = usingSupabase
+  ? supabaseProductRepository
+  : mockProductRepository;
+
+export const orderRepository: OrderRepository = usingSupabase
+  ? supabaseOrderRepository
+  : mockOrderRepository;
+
+export const purchaseAccessRepository: PurchaseAccessRepository = usingSupabase
+  ? supabasePurchaseAccessRepository
+  : mockPurchaseAccessRepository;
 

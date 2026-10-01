@@ -41,8 +41,10 @@ export type DeliveryAssets = {
 };
 
 /**
- * Keyed by product id. Custom design is a service and therefore absent: it is
- * delivered by a conversation, not by a self-service download.
+ * Keyed by product id — one entry per design in the live catalogue.
+ *
+ * Custom design is a service and therefore absent: it is delivered by a
+ * conversation, not by a self-service download.
  */
 const assets: Record<string, DeliveryAssets> = {
   "modern-ivory": {
@@ -65,125 +67,6 @@ const assets: Record<string, DeliveryAssets> = {
     setupPdfUrl:
       "/api/delivery/mock/guides/burgundy?order=BW-MOCK&token=mock",
     canvaLabel: "Open in Canva",
-  },
-  "brown-and-ivory": {
-    canvaTemplateUrl:
-      "https://www.canva.com/design/MOCK-BROWN-IVORY-WEBSITE/edit?utm_content=blanc",
-    setupPdfUrl:
-      "/api/delivery/mock/guides/brown-and-ivory?order=BW-MOCK&token=mock",
-    canvaLabel: "Open in Canva",
-  },
-  "dusty-blue": {
-    canvaTemplateUrl:
-      "https://www.canva.com/design/MOCK-DUSTY-BLUE-WEBSITE/edit?utm_content=blanc",
-    setupPdfUrl:
-      "/api/delivery/mock/guides/dusty-blue?order=BW-MOCK&token=mock",
-    canvaLabel: "Open in Canva",
-  },
-  "black-and-white": {
-    canvaTemplateUrl:
-      "https://www.canva.com/design/MOCK-BLACK-WHITE-WEBSITE/edit?utm_content=blanc",
-    setupPdfUrl:
-      "/api/delivery/mock/guides/black-and-white?order=BW-MOCK&token=mock",
-    canvaLabel: "Open in Canva",
-  },
-  "garden-party": {
-    canvaTemplateUrl:
-      "https://www.canva.com/design/MOCK-GARDEN-PARTY-WEBSITE/edit?utm_content=blanc",
-    setupPdfUrl:
-      "/api/delivery/mock/guides/garden-party?order=BW-MOCK&token=mock",
-    canvaLabel: "Open in Canva",
-  },
-  "classic-ivory": {
-    canvaTemplateUrl:
-      "https://www.canva.com/design/MOCK-CLASSIC-IVORY-WEBSITE/edit?utm_content=blanc",
-    setupPdfUrl:
-      "/api/delivery/mock/guides/classic-ivory?order=BW-MOCK&token=mock",
-    canvaLabel: "Open in Canva",
-  },
-  "editorial-stone": {
-    canvaTemplateUrl:
-      "https://www.canva.com/design/MOCK-EDITORIAL-STONE-WEBSITE/edit?utm_content=blanc",
-    setupPdfUrl:
-      "/api/delivery/mock/guides/editorial-stone?order=BW-MOCK&token=mock",
-    canvaLabel: "Open in Canva",
-  },
-  "plein-air": {
-    canvaTemplateUrl:
-      "https://www.canva.com/design/MOCK-PLEIN-AIR-WEBSITE/edit?utm_content=blanc",
-    setupPdfUrl:
-      "/api/delivery/mock/guides/plein-air?order=BW-MOCK&token=mock",
-    canvaLabel: "Open in Canva",
-  },
-  "pearl-and-ivory": {
-    canvaTemplateUrl:
-      "https://www.canva.com/design/MOCK-PEARL-IVORY-STD/edit?utm_content=blanc",
-    setupPdfUrl:
-      "/api/delivery/mock/guides/pearl-and-ivory?order=BW-MOCK&token=mock",
-    canvaLabel: "Open in Canva",
-  },
-  "sage-and-ivory": {
-    canvaTemplateUrl:
-      "https://www.canva.com/design/MOCK-SAGE-IVORY-STD/edit?utm_content=blanc",
-    setupPdfUrl:
-      "/api/delivery/mock/guides/sage-and-ivory?order=BW-MOCK&token=mock",
-    canvaLabel: "Open in Canva",
-  },
-  "blush-and-sage": {
-    canvaTemplateUrl:
-      "https://www.canva.com/design/MOCK-BLUSH-SAGE-STD/edit?utm_content=blanc",
-    setupPdfUrl:
-      "/api/delivery/mock/guides/blush-and-sage?order=BW-MOCK&token=mock",
-    canvaLabel: "Open in Canva",
-  },
-  "modern-ivory-save-the-date": {
-    canvaTemplateUrl:
-      "https://www.canva.com/design/MOCK-MODERN-IVORY-STD/edit?utm_content=blanc",
-    setupPdfUrl:
-      "/api/delivery/mock/guides/modern-ivory-save-the-date?order=BW-MOCK&token=mock",
-    canvaLabel: "Open in Canva",
-  },
-  "burgundy-save-the-date": {
-    canvaTemplateUrl:
-      "https://www.canva.com/design/MOCK-BURGUNDY-STD/edit?utm_content=blanc",
-    setupPdfUrl:
-      "/api/delivery/mock/guides/burgundy-save-the-date?order=BW-MOCK&token=mock",
-    canvaLabel: "Open in Canva",
-  },
-  "dusty-blue-save-the-date": {
-    canvaTemplateUrl:
-      "https://www.canva.com/design/MOCK-DUSTY-BLUE-STD/edit?utm_content=blanc",
-    setupPdfUrl:
-      "/api/delivery/mock/guides/dusty-blue-save-the-date?order=BW-MOCK&token=mock",
-    canvaLabel: "Open in Canva",
-  },
-  "brown-and-ivory-save-the-date": {
-    canvaTemplateUrl:
-      "https://www.canva.com/design/MOCK-BROWN-IVORY-STD/edit?utm_content=blanc",
-    setupPdfUrl:
-      "/api/delivery/mock/guides/brown-and-ivory-save-the-date?order=BW-MOCK&token=mock",
-    canvaLabel: "Open in Canva",
-  },
-  "black-and-white-save-the-date": {
-    canvaTemplateUrl:
-      "https://www.canva.com/design/MOCK-BLACK-WHITE-STD/edit?utm_content=blanc",
-    setupPdfUrl:
-      "/api/delivery/mock/guides/black-and-white-save-the-date?order=BW-MOCK&token=mock",
-    canvaLabel: "Open in Canva",
-  },
-  "modern-ivory-bundle": {
-    canvaTemplateUrl:
-      "https://www.canva.com/design/MOCK-MODERN-IVORY-BUNDLE/edit?utm_content=blanc",
-    setupPdfUrl:
-      "/api/delivery/mock/guides/modern-ivory-bundle?order=BW-MOCK&token=mock",
-    canvaLabel: "Open both in Canva",
-  },
-  "garden-party-bundle": {
-    canvaTemplateUrl:
-      "https://www.canva.com/design/MOCK-GARDEN-PARTY-BUNDLE/edit?utm_content=blanc",
-    setupPdfUrl:
-      "/api/delivery/mock/guides/garden-party-bundle?order=BW-MOCK&token=mock",
-    canvaLabel: "Open both in Canva",
   },
 };
 

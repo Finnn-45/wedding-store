@@ -53,14 +53,14 @@ export function ProductCard({ product, priority = false, className }: ProductCar
           </span>
         </div>
 
-        <div className="mt-4 flex items-start justify-between gap-3">
+        <div className="mt-4 flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
           <div className="min-w-0">
-            <h3 className="truncate font-serif text-title-sm">{product.name}</h3>
+            <h3 className="font-serif text-title-sm">{product.name}</h3>
             <p className="mt-1 text-body-sm text-stone">
               {typeShortLabels[product.type]}
             </p>
           </div>
-          <p className="shrink-0 text-body text-ink tabular-nums">
+          <p className="ml-auto shrink-0 text-body text-ink tabular-nums">
             {price.original ? (
               <span className="mr-1.5 text-stone line-through">{price.original}</span>
             ) : null}

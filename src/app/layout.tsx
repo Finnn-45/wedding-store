@@ -1,10 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
-import { Footer } from "@/components/layout/Footer";
-import { Header } from "@/components/layout/Header";
+import { SiteChrome } from "@/components/layout/SiteChrome";
 import { siteUrl } from "@/lib/site";
 import "./globals.css";
-
 /* Editorial serif — headings, collection titles, brand statements. */
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -28,11 +26,11 @@ export const metadata: Metadata = {
     template: "%s | BLANC WEDDINGS",
   },
   description:
-    "Elegant wedding website and Save the Date templates for modern couples.",
+    "Editable Canva wedding website templates for modern couples — elegant, mobile-ready and delivered instantly.",
   applicationName: "BLANC WEDDINGS",
   keywords: [
     "wedding website template",
-    "save the date website",
+    "canva wedding website template",
     "digital wedding invitation",
     "wedding website design",
     "modern wedding template",
@@ -64,11 +62,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
 
-        <Header />
-        <main id="main" className="flex-1">
-          {children}
-        </main>
-        <Footer />
+        <SiteChrome>{children}</SiteChrome>
       </body>
     </html>
   );

@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = {
   title: "Wedding Website Templates",
   description:
-    "Shop every Blanc Weddings template: wedding websites, Save the Date pages and bundles. Digital delivery, instant access.",
+    "Shop every Blanc Weddings design: editable Canva wedding website templates. Digital delivery, instant access.",
 };
 
 function FilterLink({
@@ -97,7 +97,7 @@ export default async function ShopPage(props: PageProps<"/shop">) {
             as="h1"
             eyebrow="The collection"
             title="Wedding website templates"
-            description="Every design is a complete wedding website — or a Save the Date page, or both."
+            description="Every design is a complete wedding website — every section you need, editable entirely in Canva."
           />
         </Container>
       </section>

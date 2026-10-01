@@ -27,27 +27,6 @@ export type StyleCategory = {
 
 export const styleCategories: StyleCategory[] = [
   {
-    style: "modern",
-    label: "Modern",
-    slug: "modern",
-    image: "/images/styles/modern.svg",
-    note: "Graphic, current, no ornament",
-  },
-  {
-    style: "romantic",
-    label: "Romantic",
-    slug: "romantic",
-    image: "/images/styles/romantic.svg",
-    note: "Warm palettes, soft serif type",
-  },
-  {
-    style: "editorial",
-    label: "Editorial",
-    slug: "editorial",
-    image: "/images/styles/editorial.svg",
-    note: "Magazine hierarchy, wide margins",
-  },
-  {
     style: "minimal",
     label: "Minimal",
     slug: "minimal",
@@ -62,25 +41,11 @@ export const styleCategories: StyleCategory[] = [
     note: "Green tones for outdoor days",
   },
   {
-    style: "classic",
-    label: "Classic",
-    slug: "classic",
-    image: "/images/styles/classic.svg",
-    note: "Formal, symmetrical, timeless",
-  },
-  {
-    style: "black-white",
-    label: "Black & White",
-    slug: "black-white",
-    image: "/images/styles/black-white.svg",
-    note: "No colour, all photography",
-  },
-  {
-    style: "colorful",
-    label: "Colorful",
-    slug: "colorful",
-    image: "/images/styles/colorful.svg",
-    note: "Sunlit, playful, generous",
+    style: "romantic",
+    label: "Romantic",
+    slug: "romantic",
+    image: "/images/styles/romantic.svg",
+    note: "Warm palettes, soft serif type",
   },
 ];
 

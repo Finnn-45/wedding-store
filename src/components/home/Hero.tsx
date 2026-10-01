@@ -2,6 +2,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { productRepository } from "@/lib/repositories";
 
 const assurances = [
   "Complete wedding websites",
@@ -10,7 +11,11 @@ const assurances = [
 ];
 
 /** A website shown the way a couple would first see it: on real devices. */
-export function Hero() {
+export async function Hero() {
+  // The secondary call to action opens the newest design's public demo instead
+  // of a hard-coded slug, so it follows the catalogue as it changes.
+  const [lead] = await productRepository.listFeatured(1);
+
   return (
     <section className="relative overflow-hidden pb-16 pt-12 lg:pb-32 lg:pt-20">
       <Container>
@@ -35,12 +40,8 @@ export function Hero() {
               <Button href="/shop?type=wedding-website" size="lg">
                 Shop Wedding Websites
               </Button>
-              <Button
-                href="/shop?type=save-the-date"
-                variant="outline"
-                size="lg"
-              >
-                Explore Save the Dates
+              <Button href={lead?.demoUrl ?? "/shop"} variant="outline" size="lg">
+                See a live demo
               </Button>
             </div>
 
@@ -102,7 +103,7 @@ export function Hero() {
               height={1500}
               unoptimized
               sizes="16vw"
-              className="absolute -right-1 bottom-0 w-[30%] drop-shadow-[0_25px_45px_rgba(27,26,24,0.35)] sm:w-[26%] lg:-right-6 lg:w-[24%]"
+              className="absolute -right-1 bottom-0 w-[26%] drop-shadow-[0_25px_45px_rgba(27,26,24,0.35)] lg:-right-6 lg:w-[24%]"
             />
           </div>
         </div>

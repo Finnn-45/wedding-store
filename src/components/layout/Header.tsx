@@ -23,7 +23,7 @@ export function Header() {
         </Container>
       </div>
 
-      <Container className="flex h-16 items-center justify-between gap-3 sm:gap-4 lg:grid lg:h-20 lg:grid-cols-[1fr_auto_1fr] lg:gap-8">
+      <Container className="flex h-16 items-center justify-between gap-2 sm:gap-4 lg:grid lg:h-20 lg:grid-cols-[1fr_auto_1fr] lg:gap-8">
         <nav aria-label="Shop" className="hidden lg:flex lg:items-center lg:gap-9">
           {primaryNav.map((item) => (
             <Link
@@ -42,7 +42,7 @@ export function Header() {
 
         <Link
           href="/"
-          className="whitespace-nowrap font-serif text-[0.9375rem] uppercase tracking-[0.18em] text-ink sm:text-[1.0625rem] sm:tracking-[0.25em] lg:justify-self-center lg:text-[1.125rem] lg:tracking-[0.3em]"
+          className="whitespace-nowrap font-serif text-[0.8125rem] uppercase tracking-[0.18em] text-ink sm:text-[1.0625rem] sm:tracking-[0.25em] lg:justify-self-center lg:text-[1.125rem] lg:tracking-[0.3em]"
         >
           Blanc Weddings
         </Link>

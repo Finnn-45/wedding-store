@@ -714,41 +714,19 @@ const renderers = {
   mobile: (p, c, kind) => deviceView(p, c, kind),
 };
 
-/** Slugs must mirror `src/data/templates.ts`. */
+/** Slugs must mirror the live `seeds` in `src/data/products.ts`. */
 const catalogue = [
   ["modern-ivory", "wedding", "ivory", "amelia"],
   ["olive-green", "wedding", "olive", "noor"],
   ["burgundy", "wedding", "burgundy", "camille"],
-  ["brown-and-ivory", "wedding", "brown", "ines"],
-  ["dusty-blue", "wedding", "dusty", "sofia"],
-  ["black-and-white", "wedding", "mono", "yuki"],
-  ["garden-party", "wedding", "garden", "freya"],
-  ["classic-ivory", "wedding", "classic", "charlotte"],
-  ["editorial-stone", "wedding", "stone", "margot"],
-  ["plein-air", "wedding", "terracotta", "wren"],
-  ["pearl-and-ivory", "save-the-date", "pearl", "elise"],
-  ["sage-and-ivory", "save-the-date", "sage", "mila"],
-  ["blush-and-sage", "save-the-date", "blush", "anna"],
-  ["modern-ivory-save-the-date", "save-the-date", "ivory", "amelia"],
-  ["burgundy-save-the-date", "save-the-date", "burgundy", "camille"],
-  ["dusty-blue-save-the-date", "save-the-date", "dusty", "sofia"],
-  ["brown-and-ivory-save-the-date", "save-the-date", "brown", "ines"],
-  ["black-and-white-save-the-date", "save-the-date", "mono", "yuki"],
-  ["modern-ivory-bundle", "bundle", "ivory", "amelia"],
-  ["garden-party-bundle", "bundle", "garden", "freya"],
   ["custom-wedding-website", "custom", "stone", "margot"],
 ];
 
 /** One preview per "shop by style" category. */
 const stylePlates = [
-  ["modern", "mono", "yuki"],
-  ["romantic", "blush", "anna"],
-  ["editorial", "stone", "margot"],
   ["minimal", "ivory", "amelia"],
   ["garden", "garden", "freya"],
-  ["classic", "classic", "charlotte"],
-  ["black-white", "mono", "camille"],
-  ["colorful", "terracotta", "sofia"],
+  ["romantic", "blush", "anna"],
 ];
 
 /** Editorial plates for the banner and the about page. */

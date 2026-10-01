@@ -16,7 +16,7 @@ export function ShopByStyle() {
           />
         </div>
 
-        <ul className="mt-14 grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:mt-20 lg:grid-cols-4 lg:gap-x-6">
+        <ul className="mt-14 grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:mt-20 lg:grid-cols-3 lg:gap-x-6">
           {styleCategories.map((category) => (
             <li key={category.slug}>
               <Link

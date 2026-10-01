@@ -48,7 +48,7 @@ export function OrderSummary({
                 className="w-14 shrink-0 bg-cream"
               />
               <div className="min-w-0 flex-1">
-                <p className="truncate font-serif text-title-sm">{product.name}</p>
+                <p className="font-serif text-title-sm">{product.name}</p>
                 <p className="mt-0.5 text-body-sm text-stone">
                   {typeLabels[product.type]}
                   {quantity > 1 ? ` · Quantity ${quantity}` : ""}

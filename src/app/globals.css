@@ -123,6 +123,7 @@
     -webkit-text-size-adjust: 100%;
     /* Keeps in-page anchors clear of the sticky header. */
     scroll-padding-top: 6rem;
+    overflow-x: clip;
   }
 
   @media (prefers-reduced-motion: no-preference) {
@@ -164,7 +165,46 @@
   }
 }
 
+/* ---- Wedding microsite: scroll reveal (fade + gentle rise) ---- */
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity 0.9s ease,
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---- Wedding microsite: standalone page rhythm ---- */
+/* The studio header is suppressed on /wedding, so the global 6rem
+   scroll-padding (sized for the two-tier store header) is reset and in-page
+   anchors only have to clear the microsite's own 3.5rem sticky nav. */
+html:has(.wedding-demo) {
+  scroll-padding-top: 0;
+}
+
+.wedding-demo section[id] {
+  scroll-margin-top: 5rem;
+}
+
+/* One quiet grade, so six photographs from different sources read as a
+   single editorially consistent set. */
+.grade-editorial {
+  filter: saturate(0.9) contrast(1.04) brightness(1.01);
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
   *,
   *::before,
   *::after {

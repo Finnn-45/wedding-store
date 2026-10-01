@@ -3,11 +3,15 @@ export type NavLink = {
   href: string;
 };
 
-/** Primary shop navigation — the left side of the header. */
+/**
+ * Primary shop navigation — the left side of the header.
+ *
+ * The catalogue is wedding websites only, so the header points at the shop and
+ * at the studio's bespoke service instead of at categories with no products.
+ */
 export const primaryNav: NavLink[] = [
   { label: "Shop", href: "/shop" },
-  { label: "Save the Date", href: "/shop?type=save-the-date" },
-  { label: "Wedding Websites", href: "/shop?type=wedding-website" },
+  { label: "Custom Design", href: "/custom" },
 ];
 
 /** Secondary studio navigation — slim strip above the main bar. */
@@ -24,8 +28,6 @@ export const footerNav: { title: string; links: NavLink[] }[] = [
     links: [
       { label: "All Templates", href: "/shop" },
       { label: "Wedding Websites", href: "/shop?type=wedding-website" },
-      { label: "Save the Date", href: "/shop?type=save-the-date" },
-      { label: "Bundles", href: "/shop?type=bundle" },
     ],
   },
   {

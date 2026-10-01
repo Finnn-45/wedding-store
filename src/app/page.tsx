@@ -4,7 +4,6 @@ import { FaqSection } from "@/components/home/FaqSection";
 import { FeaturedWebsites } from "@/components/home/FeaturedWebsites";
 import { Hero } from "@/components/home/Hero";
 import { HowItWorks } from "@/components/home/HowItWorks";
-import { SaveTheDateCollection } from "@/components/home/SaveTheDateCollection";
 import { ShopByStyle } from "@/components/home/ShopByStyle";
 
 export default function HomePage() {
@@ -12,7 +11,6 @@ export default function HomePage() {
     <>
       <Hero />
       <FeaturedWebsites />
-      <SaveTheDateCollection />
       <ShopByStyle />
       <EditorialBanner />
       <HowItWorks />

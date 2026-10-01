@@ -66,7 +66,7 @@ export function CartView() {
             <div className="flex min-w-0 flex-1 flex-col gap-2">
               <div className="flex items-start justify-between gap-6">
                 <div className="min-w-0">
-                  <h2 className="truncate font-serif text-title-sm">
+                  <h2 className="font-serif text-title-sm">
                     <Link
                       href={`/templates/${product.slug}`}
                       className="transition-colors hover:text-stone"

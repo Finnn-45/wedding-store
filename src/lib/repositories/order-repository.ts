@@ -36,6 +36,12 @@ export type Order = {
   /** Customer-facing order number, e.g. "BW-2026-000123". */
   orderNumber: string;
 
+  /**
+   * Set when the buyer is signed in. Guests (token delivery) leave it null.
+   * Ownership of an order is decided by this column, server-side.
+   */
+  userId?: string | null;
+
   customerName: string;
   customerEmail: string;
   /** WhatsApp number in international format, digits and + only. */
