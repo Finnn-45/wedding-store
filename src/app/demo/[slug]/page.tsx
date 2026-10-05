@@ -5,24 +5,15 @@ import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { productRepository } from "@/lib/repositories";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 /**
- * Public demo page.
- *
- * This is the DEMO half of the demo-vs-purchase split: fully public, no token,
- * no delivery assets, and every frame is labelled demo content. The Canva
- * template a customer buys is never reachable from here.
+ * The repository reads the request cookies (RLS), so this page can only render
+ * inside a real request. The route must be declared dynamic explicitly: Next
+ * would otherwise still classify the segment as static and the first request
+ * after a deploy would die with DYNAMIC_SERVER_USAGE (HTTP 500) instead of
+ * rendering the demo.
  */
-export async function generateStaticParams() {
-  // With Supabase as the source of truth the repository reads the request
-  // cookies (RLS), and `cookies()` cannot run inside generateStaticParams —
-  // it executes at build time, without an HTTP request, and fails the build.
-  // Returning no params keeps the route valid: every slug renders on demand.
-  if (isSupabaseConfigured()) return [];
-  const products = await productRepository.list();
-  return products.map((product) => ({ slug: product.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata(
   props: PageProps<"/demo/[slug]">,
@@ -43,6 +34,13 @@ export async function generateMetadata(
   };
 }
 
+/**
+ * Public demo page.
+ *
+ * This is the DEMO half of the demo-vs-purchase split: fully public, no token,
+ * no delivery assets, and every frame is labelled demo content. The Canva
+ * template a customer buys is never reachable from here.
+ */
 export default async function DemoPage(props: PageProps<"/demo/[slug]">) {
   const { slug } = await props.params;
   const product = await productRepository.getBySlug(slug);

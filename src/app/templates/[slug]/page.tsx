@@ -15,16 +15,14 @@ import { styleLabels, typeLabels } from "@/data/products";
 import { styleSlugs } from "@/data/styles";
 import { formatPriceParts, isOnSale } from "@/lib/catalog";
 import { productRepository } from "@/lib/repositories";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
 
-export async function generateStaticParams() {
-  // See the note in src/app/demo/[slug]/page.tsx: with Supabase configured the
-  // repository reads request cookies, which is not allowed here (build time,
-  // no HTTP request), so the slug is rendered on demand instead.
-  if (isSupabaseConfigured()) return [];
-  const products = await productRepository.list();
-  return products.map((product) => ({ slug: product.slug }));
-}
+/**
+ * See src/app/demo/[slug]/page.tsx: the repository reads request cookies (RLS),
+ * so the route must render per request. Without this explicit marker Next keeps
+ * the segment classified as static and the first live request fails with
+ * DYNAMIC_SERVER_USAGE (HTTP 500) instead of rendering the product page.
+ */
+export const dynamic = "force-dynamic";
 
 /**
  * Product metadata.
