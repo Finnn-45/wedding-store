@@ -79,9 +79,10 @@ Then work through the list:
    limiter in front for real traffic.
 
 Run `npm run build` before importing: it must finish with the route table and
-no "Build error". Dynamic routes (`/templates/[slug]`, `/demo/[slug]`) render
-on-demand when Supabase is configured, because the repository reads request
-cookies (RLS).
+no "Build error". The product routes (`/templates/[slug]`, `/demo/[slug]`) are
+declared `force-dynamic`: the repository reads request cookies (RLS), so they
+render per request and must never be prerendered - if Next classifies them as
+static, the first live request fails with `DYNAMIC_SERVER_USAGE` (HTTP 500).
 
 ## Routes
 
