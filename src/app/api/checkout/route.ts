@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { rateLimit } from "@/lib/rate-limit";
+import { getPaymentInstructions } from "@/lib/payment-instructions";
 import {
   checkoutService,
   parseCheckoutInput,
@@ -76,7 +77,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { order, accessUrl, accessUrls } = result;
+  const { order, requiresPayment, accessUrl, accessUrls } = result;
 
   // The access URLs are CREDENTIALS. They are returned exactly once, to the
   // buyer, with no-store caching so no shared cache or history keeps them.
@@ -100,6 +101,10 @@ export async function POST(request: Request) {
       },
       accessUrl,
       accessUrls,
+      requiresPayment,
+      // Manual flow only: transfer details for the confirmation screen. The
+      // access URLs above remain locked server-side until the order is paid.
+      payment: requiresPayment ? getPaymentInstructions() : null,
     },
     200,
   );

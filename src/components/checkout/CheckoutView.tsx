@@ -11,10 +11,22 @@ import {
   resolveCartLines,
 } from "@/lib/services/cart-service";
 
+type PaymentInstructions = {
+  method: string | null;
+  account: string | null;
+  accountName: string | null;
+  whatsapp: string | null;
+  supportEmail: string;
+};
+
 type CheckoutResponse = {
   ok?: boolean;
   code?: string;
   order?: { orderNumber: string; status: string; total: number };
+  /** Order placed but not paid yet — manual transfer awaiting confirmation. */
+  requiresPayment?: boolean;
+  /** Transfer details for the pending confirmation screen. */
+  payment?: PaymentInstructions | null;
   /** Server-issued purchase access URLs, one per purchased product. */
   accessUrls?: { url: string }[];
 };
@@ -31,6 +43,8 @@ export function CheckoutView() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Set after a manual-payment order is placed; renders the pending screen. */
+  const [placed, setPlaced] = useState<CheckoutResponse | null>(null);
 
   // Display-only: lines resolved from the catalogue in the browser. The server
   // recomputes product, price, discount and total itself.
@@ -83,6 +97,15 @@ export function CheckoutView() {
       }
 
       clear();
+      if (payload.requiresPayment) {
+        // Manual payment flow: the order is pending. Render the transfer
+        // instructions right here — nothing is granted yet, so we do NOT
+        // navigate to the access page (it stays locked until an admin
+        // confirms the money arrived).
+        setPlaced(payload);
+        window.scrollTo({ top: 0 });
+        return;
+      }
       // The access URL is a credential: it is never stored client-side, only
       // used once to navigate to the server-rendered purchase page.
       const target = payload.accessUrls?.[0]?.url;
@@ -98,6 +121,12 @@ export function CheckoutView() {
   // Hold a neutral shell until the stored cart is readable.
   if (!hydrated) {
     return <div aria-hidden="true" className="h-72 border border-line bg-shell/60" />;
+  }
+
+  // Manual payment: the order exists but is pending — show the transfer
+  // instructions instead of the form.
+  if (placed?.order && placed.requiresPayment) {
+    return <PendingPaymentConfirmation response={placed} />;
   }
 
   if (items.length === 0) {
@@ -188,35 +217,27 @@ export function CheckoutView() {
 
         <fieldset className="flex flex-col gap-7" aria-describedby="payment-note">
           <legend className="text-eyebrow text-stone uppercase">
-            Payment — test mode
+            Payment — bank transfer
           </legend>
 
-          <div className="grid gap-7 sm:grid-cols-[1.6fr_0.7fr_0.7fr]">
-            <label className="flex flex-col gap-2">
-              <span className={labelClasses}>Card number</span>
-              <input
-                disabled
-                placeholder="•••• •••• •••• ••••"
-                className={fieldClasses}
-              />
-            </label>
-            <label className="flex flex-col gap-2">
-              <span className={labelClasses}>Expiry</span>
-              <input disabled placeholder="MM / YY" className={fieldClasses} />
-            </label>
-            <label className="flex flex-col gap-2">
-              <span className={labelClasses}>CVC</span>
-              <input disabled placeholder="•••" className={fieldClasses} />
-            </label>
-          </div>
+          <ol className="flex list-decimal flex-col gap-3 pl-5 text-body text-stone">
+            <li>Place your order — nothing is charged online.</li>
+            <li>
+              Transfer the order total using the details shown on the next
+              screen (bank transfer or QRIS).
+            </li>
+            <li>
+              Send us the proof on WhatsApp — we confirm the transfer and your
+              files unlock right away.
+            </li>
+          </ol>
 
           <p id="payment-note" className="text-body-sm text-stone">
-            <strong className="font-medium text-ink">
-              This is a development checkout.
-            </strong>{" "}
-            No payment provider is connected, no card details are collected and
-            nothing is charged. A real gateway (Stripe, Midtrans, Xendit) is
-            wired in behind the payment service before go-live.
+            <strong className="font-medium text-ink">Manual payment.</strong>{" "}
+            Your order stays reserved as{" "}
+            <em className="text-ink">pending payment</em> until the transfer is
+            verified by our team. No card details are collected here, and your
+            download link activates the moment payment is confirmed.
           </p>
         </fieldset>
       </div>
@@ -228,7 +249,7 @@ export function CheckoutView() {
         className="lg:sticky lg:top-28 lg:self-start"
       >
         <ul className="flex flex-col gap-2 border-t border-line pt-6 text-body-sm text-stone">
-          <li>Editable Canva template, delivered instantly</li>
+          <li>Editable Canva template — instant access after payment</li>
           <li>Setup guide PDF included</li>
           <li>Access page by email and WhatsApp</li>
           <li>One payment — no subscription, no hidden fees</li>
@@ -244,9 +265,122 @@ export function CheckoutView() {
         ) : null}
 
         <Button type="submit" size="lg" className="w-full" disabled={submitting}>
-          {submitting ? "Processing…" : "Complete Purchase"}
+          {submitting ? "Placing…" : "Place order"}
         </Button>
       </OrderSummary>
     </form>
+  );
+}
+
+/**
+ * Post-checkout screen for the manual-payment flow: the order exists as
+ * "pending" and the buyer needs the transfer details plus a way to send proof.
+ * Nothing on this screen grants access — the links stay locked server-side
+ * until an admin confirms the order paid.
+ */
+function PendingPaymentConfirmation({ response }: { response: CheckoutResponse }) {
+  const order = response.order;
+  const payment = response.payment ?? null;
+  const accessUrl = response.accessUrls?.[0]?.url ?? null;
+
+  if (!order) return null;
+
+  const proofMessage = `Hi! I've just placed order ${order.orderNumber} ($${order.total}) — my payment proof for it follows in the next message.`;
+  const whatsappHref = payment?.whatsapp
+    ? `https://wa.me/${payment.whatsapp}?text=${encodeURIComponent(proofMessage)}`
+    : null;
+  const emailHref = `mailto:${payment?.supportEmail}?subject=${encodeURIComponent(
+    `Payment proof - order ${order.orderNumber}`,
+  )}`;
+
+  return (
+    <section className="flex flex-col gap-9 py-14 lg:py-20">
+      <header className="flex flex-col gap-4">
+        <p className="text-eyebrow uppercase text-stone">Order received</p>
+        <h1 className="font-serif text-heading-sm font-light uppercase tracking-[0.02em]">
+          Complete your payment
+        </h1>
+        <p className="text-lead text-stone">
+          Order <span className="tabular-nums">{order.orderNumber}</span> is
+          reserved for you. Transfer{" "}
+          <strong className="text-ink">${order.total}</strong> using the
+          details below — your files unlock as soon as we confirm it, usually
+          the same day.
+        </p>
+      </header>
+
+      <div className="flex flex-col gap-5 border border-line bg-shell p-6">
+        <h2 className="text-eyebrow uppercase text-stone">How to pay</h2>
+        {payment?.method || payment?.account ? (
+          <dl className="flex flex-col gap-3 text-body">
+            {payment.method ? (
+              <div className="flex items-baseline justify-between gap-6">
+                <dt className="text-stone">Method</dt>
+                <dd className="text-right">{payment.method}</dd>
+              </div>
+            ) : null}
+            {payment.account ? (
+              <div className="flex items-baseline justify-between gap-6">
+                <dt className="text-stone">Account</dt>
+                <dd className="text-right tabular-nums">
+                  {payment.account}
+                  {payment.accountName ? (
+                    <span className="block text-body-sm text-stone">
+                      a.n. {payment.accountName}
+                    </span>
+                  ) : null}
+                </dd>
+              </div>
+            ) : null}
+            <div className="flex items-baseline justify-between gap-6">
+              <dt className="text-stone">Amount</dt>
+              <dd className="tabular-nums">${order.total}</dd>
+            </div>
+          </dl>
+        ) : (
+          <p className="text-body text-stone">
+            Ask us for the payment details — mention order{" "}
+            <span className="tabular-nums">{order.orderNumber}</span> and we
+            will send the bank transfer / QRIS information straight away.
+          </p>
+        )}
+        <p className="text-body-sm text-stone">
+          After transferring, send the proof on WhatsApp (or email) — an admin
+          verifies it and your download link activates automatically.
+        </p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
+        {whatsappHref ? (
+          <Button href={whatsappHref} size="lg">
+            Send payment proof on WhatsApp
+          </Button>
+        ) : (
+          <Button href={emailHref} size="lg">
+            Email your payment proof
+          </Button>
+        )}
+        <Button href="/account/purchases" variant="outline" size="lg">
+          My purchases
+        </Button>
+      </div>
+
+      {accessUrl ? (
+        <div className="flex flex-col gap-3 border-t border-line pt-8">
+          <p className="text-eyebrow uppercase text-stone">
+            Your personal access link
+          </p>
+          <p className="text-body-sm text-stone">
+            Bookmark it — it opens as soon as your payment is confirmed. You
+            can always find it again via My purchases with your email address.
+          </p>
+          <div>
+            <Button href={accessUrl} variant="outline">
+              Open your access page
+            </Button>
+          </div>
+        </div>
+      ) : null}
+    </section>
   );
 }

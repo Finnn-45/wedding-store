@@ -193,16 +193,26 @@ dibeli, lalu bagian **Payment**.
 Nama dan harga produk disimpan sebagai snapshot saat pembelian, jadi harga
 produk bisa kamu ubah nanti tanpa mengubah isi order lama.
 
-**Penting soal status:** pembayaran masih **simulasi** (`MockPaymentService`
-selalu sukses), jadi order hasil checkout masuk sebagai `paid` — pelanggan
-langsung menerima tautan akses dari halaman sukses. Bagian `Payment` hanya
-menampilkan tombol konfirmasi untuk order yang **belum** `paid`.
+**Penting soal status:** mode default sekarang **pembayaran manual** — tidak
+ada payment gateway. Checkout membuat order berstatus `pending`; pelanggan
+melihat instruksi transfer (rekening/QRIS dari env `NEXT_PUBLIC_PAYMENT_*`) di
+layar konfirmasi, lalu mengirim bukti bayar ke WhatsApp/email toko. Order baru
+berubah `paid` setelah kamu klik **Confirm payment received** — tautan akses
+pelanggan (token sudah dibuat saat checkout, masih terkunci) langsung aktif
+otomatis saat itu. Bagian `Payment` hanya menampilkan tombol konfirmasi untuk
+order yang **belum** `paid`. Mode demo `ENABLE_MOCK_CHECKOUT=true` masih
+membuat order langsung `paid` — hanya untuk staging, jangan di toko sungguhan.
 
 **Confirm payment received** (untuk order yang belum `paid`):
 
 1. Isi **Reason / reference** — wajib. Contoh: `Bank transfer received 12 Mar,
    ref 8812`. Kosong → `A reason is required for a manual confirmation`.
 2. Klik **Confirm payment received** → `Order marked as paid`.
+
+**Prasyarat sekali jalan:** jalankan migrasi
+`supabase/migrations/0002_order_paid_at.sql` di SQL editor Supabase (menambah
+kolom `orders.paid_at`). Tanpa kolom itu konfirmasi gagal dengan
+`Could not update the order`.
 
 Yang terjadi di database: `status = 'paid'`, `paid_at` diisi, `confirmed_by`
 diisi ID kamu, `confirmed_at` diisi waktu sekarang, `confirmation_note` diisi

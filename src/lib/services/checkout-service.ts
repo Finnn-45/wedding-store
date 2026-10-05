@@ -46,6 +46,13 @@ export type CheckoutResult =
       ok: true;
       order: Order;
       /**
+       * True when the money has NOT been taken yet: the order was created as
+       * "pending" and the buyer still has to transfer manually (production
+       * default). The access links below then stay locked until an admin
+       * confirms the order paid.
+       */
+      requiresPayment: boolean;
+      /**
        * The purchase-access URL the customer is sent to. This is a CREDENTIAL
        * — it is returned once, to the buyer, and must never be logged, cached
        * or exposed to anyone else.
@@ -207,16 +214,15 @@ export function createCheckoutService({
 }: CheckoutDependencies): CheckoutService {
   return {
     async placeOrder(input) {
-      // Fail fast, before any catalogue read or database write: the only
-      // payment service wired in below is the mock, and in production it must
-      // not run unless explicitly enabled (see isMockCheckoutEnabled).
-      if (!isMockCheckoutEnabled()) {
-        console.warn(
-          "[checkout] rejected: mock checkout is disabled in production. " +
-            "Set ENABLE_MOCK_CHECKOUT=true to allow demo checkouts.",
-        );
-        return { ok: false, code: "payments_disabled" };
-      }
+      // Two modes, decided once per request:
+      //   mock   — development, or ENABLE_MOCK_CHECKOUT=true: the demo provider
+      //            "charges" instantly and the order lands paid.
+      //   manual — the production default: no payment provider runs at all,
+      //            the order is created PENDING after a bank transfer, and an
+      //            admin unlocks it with "Confirm payment received".
+      // The mock can never auto-pay a real storefront: isMockCheckoutEnabled
+      // only returns true in dev or behind the explicit flag.
+      const mockCheckout = isMockCheckoutEnabled();
 
       try {
         // 1. Resolve every line against the server catalogue. Unknown or
@@ -258,20 +264,27 @@ export function createCheckoutService({
         const discount = 0;
         const total = subtotal - discount;
 
-        // 4. Payment through the service seam. The mock never charges a card;
-        //    production replaces it with a provider + verified webhook.
+        // 4. Payment. Mock mode runs the demo provider through the service
+        //    seam; manual mode never calls it — the order waits as "pending"
+        //    until an admin confirms the transfer arrived. Either way the
+        //    status is decided HERE, never by anything the browser sent.
         const orderNumber = await nextOrderNumber(orders);
-        const session = await payments.createCheckout({
-          orderNumber,
-          amount: total,
-          currency: "USD",
-        });
-        const paymentStatus = await payments.confirmPayment(session.intent, {
-          amount: total,
-          currency: "USD",
-        });
-        const paid = paymentStatus === "succeeded";
         const now = new Date().toISOString();
+        let paid = false;
+        let paymentRef: string | null = null;
+        if (mockCheckout) {
+          const session = await payments.createCheckout({
+            orderNumber,
+            amount: total,
+            currency: "USD",
+          });
+          const paymentStatus = await payments.confirmPayment(session.intent, {
+            amount: total,
+            currency: "USD",
+          });
+          paid = paymentStatus === "succeeded";
+          paymentRef = session.intent.reference;
+        }
 
         const order: Order = {
           id: orderId(),
@@ -285,28 +298,36 @@ export function createCheckoutService({
           discount,
           total,
           currency: "USD",
-          status: paid ? "paid" : "failed",
+          status: paid ? "paid" : mockCheckout ? "failed" : "pending",
           createdAt: now,
           paidAt: paid ? now : null,
-          paymentRef: session.intent.reference,
+          paymentRef,
         };
 
-        await orders.create(order);
+        // The repository is the source of truth for the persisted order: it
+        // allocates the database id and (on Supabase) the real order number,
+        // so the access records and the response must use what it RETURNS —
+        // the in-memory placeholder would be a non-uuid string that the
+        // purchase_access FK rejects.
+        const createdOrder = await orders.create(order);
 
-        // 5. Delivery happens only for a PAID order. One access token per
-        //    purchased product, so revoking one product does not revoke all.
+        // 5. One access token per purchased product, so revoking one product
+        //    does not revoke all. Tokens are minted even while the order is
+        //    PENDING: they stay inert (verify() requires status "paid"), so
+        //    the buyer's own link starts working the moment payment is
+        //    confirmed — no second email or token minting step needed.
         const accessTokens: string[] = [];
-        if (paid) {
+        if (items.length > 0) {
           for (const item of items) {
             const token = generateAccessToken();
             await access.create({
               id: `pa_${token.slice(0, 12)}`,
               token,
-              orderId: order.id,
-              orderNumber: order.orderNumber,
+              orderId: createdOrder.id,
+              orderNumber: createdOrder.orderNumber,
               productId: item.productId,
               productName: item.productName,
-              customerEmail: order.customerEmail,
+              customerEmail: createdOrder.customerEmail,
               createdAt: now,
               // Access does not expire in the mock. Production may set an
               // expiry here, and the access page already handles "expired".
@@ -328,11 +349,14 @@ export function createCheckoutService({
         if (paid && primaryToken) {
           try {
             await email.sendPurchaseConfirmation({
-              order,
+              order: createdOrder,
               accessPageUrl: accessUrl,
               supportEmail: SUPPORT_EMAIL,
             });
-            await whatsapp.sendPurchaseMessage({ order, accessPageUrl: accessUrl });
+            await whatsapp.sendPurchaseMessage({
+              order: createdOrder,
+              accessPageUrl: accessUrl,
+            });
           } catch (deliveryError) {
             console.error("[checkout] delivery simulation failed:", deliveryError);
           }
@@ -340,7 +364,11 @@ export function createCheckoutService({
 
         return {
           ok: true,
-          order,
+          order: createdOrder,
+          // The order is pending when no money was taken (manual transfer) —
+          // the API then attaches payment instructions for the confirmation
+          // screen, and the access links stay locked until an admin confirms.
+          requiresPayment: createdOrder.status === "pending",
           // Single-product orders get the token inline. Multi-product orders
           // send every token in the response so the confirmation page can
           // build one access link per item (it renders them server-side).

@@ -58,23 +58,36 @@ and set these project environment variables:
 | `SUPABASE_SERVICE_ROLE_KEY` | Same page → `service_role` / `secret` key. Server only - never prefix with `NEXT_PUBLIC_` |
 | `NEXT_PUBLIC_SITE_URL` | Canonical URL of the deployment, e.g. `https://your-app.vercel.app`. Purchase access links (`/access/<token>`) are built from it - the fallback default is `https://blancweddings.com`, so leaving it unset sends buyers to the wrong domain |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | Inbox shown across the site and in delivery messages |
+| `NEXT_PUBLIC_PAYMENT_METHOD` | Optional - payment label buyers see on the pending confirmation screen, e.g. `Bank transfer (BCA) / QRIS` |
+| `NEXT_PUBLIC_PAYMENT_ACCOUNT` | Optional - account number / wallet for the transfer |
+| `NEXT_PUBLIC_PAYMENT_ACCOUNT_NAME` | Optional - account holder name |
+| `NEXT_PUBLIC_WHATSAPP_NUMBER` | Optional - store WhatsApp for the "Send payment proof" button, digits only (`62812...`). Falls back to the support email while unset |
 
 Then work through the list:
 
 1. **Supabase Auth URLs** - Authentication → URL Configuration: set *Site URL*
    to the Vercel domain and add `<site>/login` and `<site>/signup` to *Redirect
    URLs*, otherwise sign-in redirects bounce back to `localhost`.
-2. **Mock checkout is disabled in production.** The only payment service wired
-   in is `MockPaymentService`, which marks every order paid and issues the paid
-   files - so a public deployment refuses checkout with `503 payments_disabled`
-   unless `ENABLE_MOCK_CHECKOUT=true` is set. Set that flag only to demo the
-   full purchase flow on your own deployment, and remove it before real
-   traffic. Local `npm run dev` is unaffected.
-3. **First admin account** - sign up at `/signup` (web sign-ups are always
+2. **Apply the database migrations** - in the Supabase SQL editor run
+   `supabase/migrations/0002_order_paid_at.sql` (idempotent; adds
+   `orders.paid_at`, which **Confirm payment received** writes). Without that
+   column every manual payment confirmation fails with "Could not update the
+   order". Fresh projects run `0001_init.sql` first, then `0002`.
+3. **Checkout runs in manual-payment mode by default.** No payment provider is
+   connected: the buyer places an order (created as `pending`), transfers the
+   total by bank transfer / QRIS using the instructions on the confirmation
+   screen, sends the proof, and you unlock the files with **Confirm payment
+   received** in `/admin/orders` (see `ADMIN.md`). Set `NEXT_PUBLIC_PAYMENT_*`
+   and `NEXT_PUBLIC_WHATSAPP_NUMBER` (table above) so buyers see your account
+   details; while they are unset, buyers are asked to contact you instead.
+   `ENABLE_MOCK_CHECKOUT=true` switches to a demo flow that marks every order
+   paid - set it only on your own staging URL, never on a real storefront.
+   Local `npm run dev` always runs mock.
+4. **First admin account** - sign up at `/signup` (web sign-ups are always
    `role = 'customer'`), then promote it from the Supabase SQL editor:
    `update public.profiles set role = 'admin' where email = 'you@example.com';`
    The full manual is `ADMIN.md`.
-4. **Rate limits live in memory** and reset on every cold start (checkout: 30
+5. **Rate limits live in memory** and reset on every cold start (checkout: 30
    requests / 10 minutes per IP). Fine for a demo; put Vercel WAF or an edge
    limiter in front for real traffic.
 
