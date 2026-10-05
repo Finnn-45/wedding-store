@@ -42,9 +42,7 @@ async function loadOrder(props: SuccessPageProps): Promise<Order | null> {
   }
 }
 
-export async function generateMetadata(
-  props: SuccessPageProps,
-): Promise<Metadata> {
+export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "Order received",
     robots: { index: false, follow: false },

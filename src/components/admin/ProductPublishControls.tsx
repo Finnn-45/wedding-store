@@ -5,7 +5,7 @@ import {
   deleteProductAction,
   setProductPublishedAction,
 } from "@/app/admin/actions";
-import { ActionMessage, SubmitButton, field, label } from "@/components/admin/Form";
+import { ActionMessage, SubmitButton, label } from "@/components/admin/Form";
 
 /** Publish / unpublish + delete. Both are server actions guarded by requireAdmin. */
 export function ProductPublishControls({

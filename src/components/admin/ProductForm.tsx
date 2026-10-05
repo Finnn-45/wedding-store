@@ -163,7 +163,7 @@ export function ProductForm({
         </label>
         <label className="flex items-center gap-2 text-body-sm">
           <input type="checkbox" name="priceFrom" defaultChecked={product?.priceFrom ?? false} />
-          "Starting at" price
+          &quot;Starting at&quot; price
         </label>
       </fieldset>
 

@@ -15,7 +15,6 @@ type Ctx = { params: Promise<{ slug: string }> };
 function pdfLine(text: string, max = 92): string {
   return text
     .normalize("NFKD")
-    // eslint-disable-next-line no-control-regex
     .replace(/[^\x20-\x7E]/g, "-")
     .slice(0, max);
 }
