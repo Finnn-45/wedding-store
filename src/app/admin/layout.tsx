@@ -5,6 +5,15 @@ import { Eyebrow } from "@/components/ui/Eyebrow";
 import { getSession } from "@/lib/auth/guards";
 
 /**
+ * Every admin route reads the session cookie (this layout + each page's
+ * requireAdmin), so none of them can be statically prerendered. Opt the whole
+ * /admin segment out of static generation; without this, `next build` aborts
+ * with "Dynamic server usage: couldn't be rendered statically because it used
+ * `cookies`".
+ */
+export const dynamic = "force-dynamic";
+
+/**
  * Admin shell.
  *
  * NOTE ON THE GUARD: this layout deliberately does NOT call requireAdmin(),
