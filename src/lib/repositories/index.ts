@@ -12,19 +12,26 @@
  *
  * Server only: client components must never import this module.
  */
+import { mockCouponRepository } from "@/lib/mock/coupon-repository";
 import { mockOrderRepository } from "@/lib/mock/order-repository";
 import { mockProductRepository } from "@/lib/mock/product-repository";
 import { mockPurchaseAccessRepository } from "@/lib/mock/purchase-access-repository";
+import type { CouponRepository } from "@/lib/repositories/coupon-repository";
 import type {
   OrderRepository,
   PurchaseAccessRepository,
 } from "@/lib/repositories/order-repository";
 import type { ProductRepository } from "@/lib/repositories/product-repository";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { supabaseCouponRepository } from "@/lib/supabase/repositories/coupon-repository";
 import { supabaseOrderRepository } from "@/lib/supabase/repositories/order-repository";
 import { supabaseProductRepository } from "@/lib/supabase/repositories/product-repository";
 import { supabasePurchaseAccessRepository } from "@/lib/supabase/repositories/purchase-access-repository";
 
+export type {
+  Coupon,
+  CouponRepository,
+} from "@/lib/repositories/coupon-repository";
 export type {
   Order,
   OrderItem,
@@ -54,4 +61,8 @@ export const orderRepository: OrderRepository = usingSupabase
 export const purchaseAccessRepository: PurchaseAccessRepository = usingSupabase
   ? supabasePurchaseAccessRepository
   : mockPurchaseAccessRepository;
+
+export const couponRepository: CouponRepository = usingSupabase
+  ? supabaseCouponRepository
+  : mockCouponRepository;
 

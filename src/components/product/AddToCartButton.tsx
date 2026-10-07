@@ -11,6 +11,8 @@ type AddToCartButtonProps = {
   mode?: "buy" | "cart";
   size?: "sm" | "md" | "lg";
   className?: string;
+  /** Chosen option VALUE when the product offers one (resolved server-side). */
+  option?: string | null;
 };
 
 export function AddToCartButton({
@@ -18,6 +20,7 @@ export function AddToCartButton({
   mode = "buy",
   size = "lg",
   className,
+  option,
 }: AddToCartButtonProps) {
   const { add } = useCart();
   const router = useRouter();
@@ -29,7 +32,7 @@ export function AddToCartButton({
         size={size}
         className={className}
         onClick={() => {
-          add(productId);
+          add(productId, 1, option);
           router.push("/cart");
         }}
       >
@@ -44,7 +47,7 @@ export function AddToCartButton({
       variant="outline"
       className={className}
       onClick={() => {
-        add(productId);
+        add(productId, 1, option);
         setAdded(true);
       }}
     >

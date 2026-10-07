@@ -7,6 +7,7 @@ import type {
   ProductRow,
 } from "@/lib/supabase/types";
 import { toStringArray } from "@/lib/supabase/types";
+import { parseProductOption } from "@/data/products";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -58,6 +59,9 @@ function toProduct(row: ProductWithImages): Product {
     palette: Array.isArray(row.palette)
       ? (row.palette as Product["palette"])
       : [],
+    // Missing column (pre-0003) and malformed jsonb both parse to "no
+    // options" — the product then sells exactly as it always did.
+    options: parseProductOption(row.options),
     createdAt: row.created_at,
     featured: row.featured,
     published: row.published,

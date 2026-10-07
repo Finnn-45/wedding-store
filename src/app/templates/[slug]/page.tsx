@@ -1,9 +1,9 @@
 ﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AddToCartButton } from "@/components/product/AddToCartButton";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductGrid } from "@/components/product/ProductGrid";
+import { ProductPurchase } from "@/components/product/ProductPurchase";
 import { Accordion } from "@/components/ui/Accordion";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
@@ -172,15 +172,11 @@ export default async function ProductPage(
                 </p>
               </div>
             ) : (
-              <div className="flex flex-col gap-3">
-                <AddToCartButton productId={product.id} className="w-full" />
-                <AddToCartButton
-                  productId={product.id}
-                  mode="cart"
-                  size="lg"
-                  className="w-full"
-                />
-              </div>
+              <ProductPurchase
+                productId={product.id}
+                price={product.price}
+                options={product.options ?? null}
+              />
             )}
 
             <p className="text-body-sm text-stone">

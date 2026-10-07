@@ -3,12 +3,13 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { OrderSummary, type OrderLine } from "@/components/cart/OrderSummary";
+import { OrderSummary } from "@/components/cart/OrderSummary";
 import { useCart, useHydrated } from "@/components/cart/useCart";
 import { Button } from "@/components/ui/Button";
 import {
   cartSubtotal,
   resolveCartLines,
+  type ResolvedCartLine,
 } from "@/lib/services/cart-service";
 
 type PaymentInstructions = {
@@ -22,7 +23,13 @@ type PaymentInstructions = {
 type CheckoutResponse = {
   ok?: boolean;
   code?: string;
-  order?: { orderNumber: string; status: string; total: number };
+  order?: {
+    orderNumber: string;
+    status: string;
+    subtotal?: number;
+    discount?: number;
+    total: number;
+  };
   /** Order placed but not paid yet — manual transfer awaiting confirmation. */
   requiresPayment?: boolean;
   /** Transfer details for the pending confirmation screen. */
@@ -48,7 +55,7 @@ export function CheckoutView() {
 
   // Display-only: lines resolved from the catalogue in the browser. The server
   // recomputes product, price, discount and total itself.
-  const items: OrderLine[] = resolveCartLines(lines);
+  const items: ResolvedCartLine[] = resolveCartLines(lines);
   const subtotal = cartSubtotal(items);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -56,6 +63,7 @@ export function CheckoutView() {
     if (submitting) return;
 
     const data = new FormData(event.currentTarget);
+    const couponCode = String(data.get("couponCode") ?? "").trim();
     setSubmitting(true);
     setError(null);
 
@@ -75,7 +83,11 @@ export function CheckoutView() {
           items: items.map((line) => ({
             productId: line.product.id,
             quantity: line.quantity,
+            // Identity only — the server re-resolves label and price delta.
+            ...(line.option ? { option: line.option } : {}),
           })),
+          // Code is validated server-side against the coupons table.
+          ...(couponCode ? { couponCode } : {}),
         }),
       });
 
@@ -89,9 +101,11 @@ export function CheckoutView() {
         setError(
           response.status === 429
             ? "Too many attempts. Please wait a moment and try again."
-            : payload?.code === "payments_disabled"
-              ? "Checkout is not available right now. Please contact us to place your order."
-              : "Something went wrong. Please try again.",
+            : payload?.code === "invalid_coupon"
+              ? "That discount code is not valid or has expired."
+              : payload?.code === "payments_disabled"
+                ? "Checkout is not available right now. Please contact us to place your order."
+                : "Something went wrong. Please try again.",
         );
         return;
       }
@@ -255,6 +269,19 @@ export function CheckoutView() {
           <li>One payment — no subscription, no hidden fees</li>
         </ul>
 
+        <label className="flex flex-col gap-2">
+          <span className={labelClasses}>Discount code (optional)</span>
+          <input
+            name="couponCode"
+            maxLength={40}
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            placeholder="e.g. WELCOME10"
+            className={fieldClasses}
+          />
+        </label>
+
         {error ? (
           <p
             role="alert"
@@ -330,6 +357,12 @@ function PendingPaymentConfirmation({ response }: { response: CheckoutResponse }
                     </span>
                   ) : null}
                 </dd>
+              </div>
+            ) : null}
+            {order.discount ? (
+              <div className="flex items-baseline justify-between gap-6">
+                <dt className="text-stone">Discount</dt>
+                <dd className="tabular-nums">−${order.discount}</dd>
               </div>
             ) : null}
             <div className="flex items-baseline justify-between gap-6">

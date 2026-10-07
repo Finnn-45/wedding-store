@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { OrderSummary, type OrderLine } from "@/components/cart/OrderSummary";
+import { OrderSummary } from "@/components/cart/OrderSummary";
 import { useCart, useHydrated } from "@/components/cart/useCart";
 import { Button } from "@/components/ui/Button";
 import { typeLabels } from "@/data/products";
@@ -10,6 +10,7 @@ import { formatPriceParts } from "@/lib/catalog";
 import {
   cartSubtotal,
   resolveCartLines,
+  type ResolvedCartLine,
 } from "@/lib/services/cart-service";
 
 export function CartView() {
@@ -17,7 +18,7 @@ export function CartView() {
   const hydrated = useHydrated();
 
   // Display-only resolution — the server recomputes prices at checkout.
-  const items: OrderLine[] = resolveCartLines(lines);
+  const items: ResolvedCartLine[] = resolveCartLines(lines);
   const subtotal = cartSubtotal(items);
 
   if (!hydrated) {
@@ -44,10 +45,11 @@ export function CartView() {
   return (
     <div className="grid gap-12 lg:grid-cols-[1.4fr_0.6fr] lg:gap-20">
       <ul className="flex flex-col divide-y divide-line border-y border-line">
-        {items.map(({ product, quantity }) => {
+        {items.map(({ product, quantity, option, optionDelta }) => {
           const price = formatPriceParts(product);
+          const unit = product.price + (optionDelta ?? 0);
           return (
-          <li key={product.id} className="flex gap-5 py-8">
+          <li key={`${product.id}:${option ?? ""}`} className="flex gap-5 py-8">
             <Link
               href={`/templates/${product.slug}`}
               className="w-20 shrink-0 overflow-hidden bg-cream transition-opacity duration-300 hover:opacity-90 sm:w-24"
@@ -76,6 +78,9 @@ export function CartView() {
                   </h2>
                   <p className="mt-1 text-body-sm text-stone">
                     {typeLabels[product.type]}
+                    {option
+                      ? ` · ${product.options?.label ?? "Option"}: ${option}`
+                      : ""}
                   </p>
 
                   <div
@@ -87,7 +92,7 @@ export function CartView() {
                       type="button"
                       aria-label={`Decrease quantity of ${product.name}`}
                       disabled={quantity <= 1}
-                      onClick={() => update(product.id, quantity - 1)}
+                      onClick={() => update(product.id, quantity - 1, option)}
                       className="flex h-9 w-9 items-center justify-center border border-line text-ink transition-colors duration-300 hover:border-ink disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <span aria-hidden="true">−</span>
@@ -98,7 +103,7 @@ export function CartView() {
                     <button
                       type="button"
                       aria-label={`Increase quantity of ${product.name}`}
-                      onClick={() => update(product.id, quantity + 1)}
+                      onClick={() => update(product.id, quantity + 1, option)}
                       className="flex h-9 w-9 items-center justify-center border border-line text-ink transition-colors duration-300 hover:border-ink"
                     >
                       <span aria-hidden="true">+</span>
@@ -106,18 +111,18 @@ export function CartView() {
                   </div>
                 </div>
                 <p className="shrink-0 text-body tabular-nums">
-                  {price.original ? (
+                  {price.original && !optionDelta ? (
                     <span className="mr-1.5 text-stone line-through">
                       {price.original}
                     </span>
                   ) : null}
-                  {price.current}
+                  {`$${unit}`}
                 </p>
               </div>
 
               <button
                 type="button"
-                onClick={() => remove(product.id)}
+                onClick={() => remove(product.id, option)}
                 className="mt-auto self-start text-body-sm text-stone underline decoration-line underline-offset-4 transition-colors duration-300 hover:text-ink hover:decoration-ink"
               >
                 Remove

@@ -5,7 +5,33 @@ export type CartLine = {
    */
   productId: string;
   quantity: number;
+  /**
+   * Chosen option VALUE when the product offers one (e.g. "Burgundy").
+   * Identity only — the price delta for that choice is resolved server-side
+   * at checkout, exactly like every other money value.
+   */
+  option?: string;
 };
+
+/** Matches OPTION_NAME_MAX in src/data/products.ts. */
+const OPTION_MAX = 60;
+
+function normaliseOption(value: string | null | undefined): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim().slice(0, OPTION_MAX);
+  return trimmed || undefined;
+}
+
+/** One cart line per product AND per chosen option. */
+function matchesLine(
+  line: CartLine,
+  productId: string,
+  option: string | undefined,
+): boolean {
+  return (
+    line.productId === productId && normaliseOption(line.option) === option
+  );
+}
 
 const STORAGE_KEY = "blanc-weddings-cart-v2";
 
@@ -19,10 +45,15 @@ const listeners = new Set<() => void>();
 function isCartLine(value: unknown): value is CartLine {
   if (typeof value !== "object" || value === null) return false;
   const line = value as Record<string, unknown>;
+  const option = line.option;
   return (
     typeof line.productId === "string" &&
     typeof line.quantity === "number" &&
-    line.quantity > 0
+    line.quantity > 0 &&
+    (option === undefined ||
+      (typeof option === "string" &&
+        option.length > 0 &&
+        option.length <= OPTION_MAX))
   );
 }
 
@@ -81,35 +112,51 @@ export function getServerSnapshot(): readonly CartLine[] {
   return EMPTY;
 }
 
-export function addToCart(productId: string, quantity = 1) {
-  const existing = snapshot.find((line) => line.productId === productId);
+export function addToCart(
+  productId: string,
+  quantity = 1,
+  option?: string | null,
+) {
+  const wanted = normaliseOption(option);
+  const existing = snapshot.find((line) => matchesLine(line, productId, wanted));
   commit(
     existing
       ? snapshot.map((line) =>
-          line.productId === productId
+          matchesLine(line, productId, wanted)
             ? { ...line, quantity: line.quantity + quantity }
             : line,
         )
-      : [...snapshot, { productId, quantity }],
+      : [
+          ...snapshot,
+          wanted
+            ? { productId, quantity, option: wanted }
+            : { productId, quantity },
+        ],
   );
 }
 
-export function removeFromCart(productId: string) {
-  commit(snapshot.filter((line) => line.productId !== productId));
+export function removeFromCart(productId: string, option?: string | null) {
+  const wanted = normaliseOption(option);
+  commit(snapshot.filter((line) => !matchesLine(line, productId, wanted)));
 }
 
 /**
  * Sets a line's quantity. Values below 1 remove the line.
- * The store keeps product id + quantity only — never a price.
+ * The store keeps product id + quantity + option value only — never a price.
  */
-export function updateQuantity(productId: string, quantity: number) {
+export function updateQuantity(
+  productId: string,
+  quantity: number,
+  option?: string | null,
+) {
   if (quantity < 1) {
-    removeFromCart(productId);
+    removeFromCart(productId, option);
     return;
   }
+  const wanted = normaliseOption(option);
   commit(
     snapshot.map((line) =>
-      line.productId === productId
+      matchesLine(line, productId, wanted)
         ? { ...line, quantity: Math.floor(quantity) }
         : line,
     ),

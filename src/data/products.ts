@@ -39,6 +39,19 @@ export type PaletteSwatch = {
   hex: string;
 };
 
+export type ProductOptionChoice = {
+  /** Display value the buyer picks — also the cart/order snapshot key. */
+  name: string;
+  /** Added to the base price at checkout; 0 keeps the base price. */
+  priceDelta: number;
+};
+
+export type ProductOption = {
+  /** Group label shown above the picker (Etsy style), e.g. "Colour". */
+  label: string;
+  choices: ProductOptionChoice[];
+};
+
 export type Product = {
   /** Stable identifier. Equals the slug today; a UUID once Supabase is live. */
   id: string;
@@ -77,6 +90,13 @@ export type Product = {
   whatsIncluded: string[];
 
   palette: PaletteSwatch[];
+
+  /**
+   * Optional Etsy-style choice (ONE group, e.g. "Colour"). Products without
+   * options sell exactly as before — the picker only renders when this is
+   * set, so configuring the invitation products never changes the rest.
+   */
+  options?: ProductOption | null;
 
   /** ISO date, used by the "Newest" sort. */
   createdAt: string;
@@ -407,4 +427,47 @@ export function isPurchasableTemplate(
     product.type === "save-the-date" ||
     product.type === "bundle"
   );
+}
+
+const OPTION_LABEL_MAX = 60;
+const OPTION_NAME_MAX = 60;
+const OPTION_MAX_CHOICES = 20;
+
+/**
+ * Narrows unknown jsonb (`products.options`) to a valid option group.
+ * Anything malformed parses as "no options": a bad or missing row must never
+ * break the product page or checkout.
+ */
+export function parseProductOption(value: unknown): ProductOption | null {
+  if (typeof value !== "object" || value === null) return null;
+  const raw = value as { label?: unknown; choices?: unknown };
+  const label =
+    typeof raw.label === "string"
+      ? raw.label.trim().slice(0, OPTION_LABEL_MAX)
+      : "";
+  if (!label || !Array.isArray(raw.choices) || raw.choices.length === 0) {
+    return null;
+  }
+
+  const choices: ProductOptionChoice[] = [];
+  const seen = new Set<string>();
+  for (const entry of raw.choices) {
+    if (typeof entry !== "object" || entry === null) continue;
+    const name =
+      typeof (entry as { name?: unknown }).name === "string"
+        ? (entry as { name: string }).name.trim().slice(0, OPTION_NAME_MAX)
+        : "";
+    const rawDelta = (entry as { priceDelta?: unknown }).priceDelta;
+    const priceDelta = typeof rawDelta === "string" ? Number(rawDelta) : rawDelta;
+    if (!name || typeof priceDelta !== "number" || !Number.isFinite(priceDelta)) {
+      continue;
+    }
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    choices.push({ name, priceDelta: Math.round(priceDelta) });
+    if (choices.length >= OPTION_MAX_CHOICES) break;
+  }
+  if (choices.length === 0) return null;
+  return { label, choices };
 }

@@ -28,6 +28,13 @@ export type OrderItem = {
   quantity: number;
   /** Convenience snapshot for support; not authoritative. */
   productSlug?: string;
+  /**
+   * Option snapshot (migration 0003) — present only when the product
+   * offered a choice at purchase time. Snapshotted like the price: a later
+   * catalogue edit never rewrites a historical order.
+   */
+  optionLabel?: string;
+  optionChoice?: string;
 };
 
 export type Order = {

@@ -150,6 +150,31 @@ export function ProductForm({
             className={`${field} resize-y`}
           />
         </label>
+        <label className="flex flex-col gap-2">
+          <span className={label}>Option label (optional)</span>
+          <input
+            name="optionLabel"
+            maxLength={60}
+            placeholder="Colour"
+            defaultValue={product?.options?.label ?? ""}
+            className={field}
+          />
+          <FieldError message={errors.optionChoices} />
+        </label>
+        <label className="flex flex-col gap-2">
+          <span className={label}>
+            Option choices — one per line: name | price delta
+          </span>
+          <textarea
+            name="optionChoices"
+            rows={4}
+            placeholder={"Ivory | 0\nBurgundy | 5"}
+            defaultValue={(product?.options?.choices ?? [])
+              .map((choice) => `${choice.name} | ${choice.priceDelta}`)
+              .join("\n")}
+            className={`${field} resize-y`}
+          />
+        </label>
       </div>
 
       <fieldset className="flex flex-wrap gap-6">

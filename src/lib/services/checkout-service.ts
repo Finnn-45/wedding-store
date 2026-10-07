@@ -1,7 +1,9 @@
 import {
+  couponRepository,
   orderRepository,
   productRepository,
   purchaseAccessRepository,
+  type Coupon,
   type Order,
   type OrderItem,
   type Product,
@@ -28,16 +30,24 @@ export type CheckoutCustomer = {
 export type CheckoutLineInput = {
   productId: string;
   quantity: number;
+  /**
+   * Chosen option VALUE when the product offers one (e.g. "Burgundy").
+   * Identity only — label and price delta are re-resolved server-side.
+   */
+  option?: string;
 };
 
 export type CheckoutInput = {
   customer: CheckoutCustomer;
   items: CheckoutLineInput[];
+  /** Discount code typed at checkout — validated against the coupons table. */
+  couponCode?: string;
 };
 
 export type CheckoutErrorCode =
   | "invalid_request"
   | "invalid_items"
+  | "invalid_coupon"
   | "payments_disabled"
   | "server_error";
 
@@ -74,6 +84,10 @@ const PRODUCT_ID_PATTERN = /^[a-z0-9-]+$/;
 const WHATSAPP_PATTERN = /^\+?[0-9]{7,15}$/;
 const MAX_LINES = 50;
 const MAX_QUANTITY_PER_PRODUCT = 100;
+/** Matches OPTION_NAME_MAX in src/data/products.ts. */
+const OPTION_MAX_LENGTH = 60;
+/** Discount codes: 3–40 chars, letters/digits/-/_ , no spaces. */
+const COUPON_CODE_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{2,39}$/;
 
 export const SUPPORT_EMAIL =
   process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "hello@blancweddings.com";
@@ -139,9 +153,32 @@ export function parseCheckoutInput(body: unknown): CheckoutInput | null {
     ) {
       return null;
     }
-    items.push({ productId, quantity });
+
+    // Optional option VALUE (identity only). A malformed value fails the
+    // whole request; the server resolves label and price delta itself.
+    let option: string | undefined;
+    if (line.option !== undefined && line.option !== null) {
+      if (typeof line.option !== "string") return null;
+      const trimmed = line.option.trim();
+      if (trimmed.length > OPTION_MAX_LENGTH) return null;
+      if (trimmed) option = trimmed;
+    }
+
+    items.push(
+      option ? { productId, quantity, option } : { productId, quantity },
+    );
   }
   if (items.length > MAX_LINES) return null;
+
+  // Optional discount code — shape-checked here, validity checked server-side.
+  let couponCode: string | undefined;
+  const couponRaw = raw.couponCode;
+  if (couponRaw !== undefined && couponRaw !== null && couponRaw !== "") {
+    if (typeof couponRaw !== "string") return null;
+    const trimmed = couponRaw.trim();
+    if (!COUPON_CODE_PATTERN.test(trimmed)) return null;
+    couponCode = trimmed;
+  }
 
   return {
     customer: {
@@ -151,6 +188,7 @@ export function parseCheckoutInput(body: unknown): CheckoutInput | null {
       notes: cleanOptionalString(customer.notes, 1000),
     },
     items,
+    ...(couponCode ? { couponCode } : {}),
   };
 }
 
@@ -166,6 +204,7 @@ type CheckoutDependencies = {
   products: typeof productRepository;
   orders: typeof orderRepository;
   access: typeof purchaseAccessRepository;
+  coupons: typeof couponRepository;
   payments: typeof mockPaymentService;
   email: typeof mockEmailDeliveryService;
   whatsapp: typeof mockWhatsAppDeliveryService;
@@ -208,6 +247,7 @@ export function createCheckoutService({
   products,
   orders,
   access,
+  coupons,
   payments,
   email,
   whatsapp,
@@ -228,40 +268,100 @@ export function createCheckoutService({
         // 1. Resolve every line against the server catalogue. Unknown or
         //    non-purchasable products fail the whole order — the client
         //    cannot invent products, prices or totals.
-        const basket = new Map<string, { product: Product; quantity: number }>();
+        type BasketEntry = {
+          product: Product;
+          quantity: number;
+          /** Resolved SERVER-side from the catalogue — never from the client. */
+          option: { label: string; choice: string; priceDelta: number } | null;
+        };
+        const basket = new Map<string, BasketEntry>();
         for (const line of input.items) {
           const product = await products.getById(line.productId);
           if (!product || !isPurchasableTemplate(product)) {
             return { ok: false, code: "invalid_items" };
           }
-          const current = basket.get(product.id);
+
+          // Resolve the option choice SERVER-side, exactly like the price.
+          const group = product.options ?? null;
+          const requested = line.option?.trim() || null;
+          let chosen: BasketEntry["option"] = null;
+          if (requested) {
+            if (!group) return { ok: false, code: "invalid_items" };
+            const choice =
+              group.choices.find((entry) => entry.name === requested) ??
+              group.choices.find(
+                (entry) => entry.name.toLowerCase() === requested.toLowerCase(),
+              );
+            if (!choice) return { ok: false, code: "invalid_items" };
+            chosen = {
+              label: group.label,
+              choice: choice.name,
+              priceDelta: choice.priceDelta,
+            };
+          } else if (group) {
+            // The product offers choices and none was sent: default to the
+            // first one, matching the picker's default on the product page.
+            const choice = group.choices[0];
+            if (!choice) return { ok: false, code: "invalid_items" };
+            chosen = {
+              label: group.label,
+              choice: choice.name,
+              priceDelta: choice.priceDelta,
+            };
+          }
+
+          const unitPrice = product.price + (chosen?.priceDelta ?? 0);
+          if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+            return { ok: false, code: "invalid_items" };
+          }
+
+          // One line per product AND per choice — two colours are two lines.
+          const key = `${product.id}\u0000${chosen?.choice ?? ""}`;
+          const current = basket.get(key);
           const quantity = (current?.quantity ?? 0) + line.quantity;
           if (quantity > MAX_QUANTITY_PER_PRODUCT) {
             return { ok: false, code: "invalid_items" };
           }
-          basket.set(product.id, { product, quantity });
+          basket.set(key, { product, quantity, option: chosen });
         }
         if (basket.size === 0) return { ok: false, code: "invalid_items" };
 
         // 2. Snapshot items with SERVER prices. A catalogue change after
         //    purchase must never rewrite a historical order.
         const items: OrderItem[] = Array.from(basket.values()).map(
-          ({ product, quantity }) => ({
+          ({ product, quantity, option }) => ({
             productId: product.id,
             productName: product.name,
             productSlug: product.slug,
-            price: product.price,
+            price: product.price + (option?.priceDelta ?? 0),
             quantity,
+            ...(option
+              ? { optionLabel: option.label, optionChoice: option.choice }
+              : {}),
           }),
         );
 
         // 3. Money is computed HERE, from the catalogue — never from anything
-        //    the browser sent. Discount is server-applied (0 in the mock).
+        //    the browser sent. The discount only ever comes from a coupon the
+        //    SERVER validated against its own table.
         const subtotal = items.reduce(
           (total, item) => total + item.price * item.quantity,
           0,
         );
-        const discount = 0;
+        let appliedCoupon: Coupon | null = null;
+        let discount = 0;
+        if (input.couponCode) {
+          try {
+            appliedCoupon = await coupons.findValid(input.couponCode);
+          } catch (couponError) {
+            console.error("[checkout] coupon lookup failed:", couponError);
+          }
+          if (!appliedCoupon) {
+            return { ok: false, code: "invalid_coupon" };
+          }
+          discount = Math.round(subtotal * (appliedCoupon.percentOff / 100));
+          if (discount > subtotal) discount = subtotal;
+        }
         const total = subtotal - discount;
 
         // 4. Payment. Mock mode runs the demo provider through the service
@@ -310,6 +410,19 @@ export function createCheckoutService({
         // the in-memory placeholder would be a non-uuid string that the
         // purchase_access FK rejects.
         const createdOrder = await orders.create(order);
+
+        // Count the redemption best-effort: the order already exists, so a
+        // failed counter must never fail the purchase.
+        if (appliedCoupon) {
+          try {
+            await coupons.redeem(appliedCoupon.id);
+          } catch (redeemError) {
+            console.error(
+              "[checkout] coupon redemption not counted:",
+              redeemError,
+            );
+          }
+        }
 
         // 5. One access token per purchased product, so revoking one product
         //    does not revoke all. Tokens are minted even while the order is
@@ -396,6 +509,7 @@ export const checkoutService: CheckoutService = createCheckoutService({
   products: productRepository,
   orders: orderRepository,
   access: purchaseAccessRepository,
+  coupons: couponRepository,
   payments: mockPaymentService,
   email: mockEmailDeliveryService,
   whatsapp: mockWhatsAppDeliveryService,

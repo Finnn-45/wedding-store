@@ -42,6 +42,12 @@ function toOrder(row: OrderRow, items: OrderItemRow[]): Order {
       productSlug: item.product_slug ?? undefined,
       price: num(item.price),
       quantity: item.quantity,
+      ...(item.option_choice
+        ? {
+            optionLabel: item.option_label ?? undefined,
+            optionChoice: item.option_choice,
+          }
+        : {}),
     })),
     subtotal: num(row.subtotal),
     discount: num(row.discount),
@@ -107,18 +113,47 @@ export const supabaseOrderRepository: OrderRepository = {
       throw new Error(`Could not create the order: ${error?.message ?? "unknown"}`);
     }
 
-    const items = order.items.map((item: OrderItem) => ({
+    type OrderItemInsert = {
+      order_id: string;
+      product_id: string;
+      product_name: string;
+      product_slug: string | null;
+      price: number;
+      quantity: number;
+      option_label?: string | null;
+      option_choice?: string | null;
+    };
+
+    const items: OrderItemInsert[] = order.items.map((item: OrderItem) => ({
       order_id: inserted.id,
       product_id: item.productId,
       product_name: item.productName,
       product_slug: item.productSlug ?? null,
       price: item.price,
       quantity: item.quantity,
+      // Option columns (0003) are only written when a choice was made —
+      // which is only possible once that migration has run, so an
+      // unmigrated database still completes plain checkouts untouched.
+      ...(item.optionChoice
+        ? {
+            option_label: item.optionLabel ?? null,
+            option_choice: item.optionChoice,
+          }
+        : {}),
     }));
 
-    const { error: itemsError } = await admin
-      .from("order_items")
-      .insert(items);
+    let { error: itemsError } = await admin.from("order_items").insert(items);
+    if (itemsError && /option_(label|choice)/.test(itemsError.message)) {
+      // Defensive: option columns missing (partial migration) — never lose
+      // the order over a display field.
+      console.warn(
+        "[supabase:order_items] option columns missing, saving without them:",
+        itemsError.message,
+      );
+      ({ error: itemsError } = await admin
+        .from("order_items")
+        .insert(items.map(({ option_label: _l, option_choice: _c, ...rest }) => rest)));
+    }
     if (itemsError) {
       throw new Error(`Could not save the order items: ${itemsError.message}`);
     }

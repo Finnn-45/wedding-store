@@ -167,7 +167,7 @@ async function OrderAccessSection({ order }: { order: Order }) {
 
             return (
               <li
-                key={item.productId}
+                key={`${item.productId}:${item.optionChoice ?? ""}`}
                 className="flex flex-col gap-3 py-5 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="min-w-0">
@@ -175,6 +175,9 @@ async function OrderAccessSection({ order }: { order: Order }) {
                   <p className="mt-1 text-body-sm text-stone">
                     {product ? typeLabels[product.type] : "Digital template"} ·
                     purchased ${item.price}
+                    {item.optionLabel && item.optionChoice
+                      ? ` · ${item.optionLabel}: ${item.optionChoice}`
+                      : ""}
                   </p>
                 </div>
 

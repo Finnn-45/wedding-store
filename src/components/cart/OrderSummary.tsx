@@ -7,6 +7,10 @@ import { cn } from "@/lib/utils";
 export type OrderLine = {
   product: Product;
   quantity: number;
+  /** Chosen option value when the product offers one (Etsy-style choice). */
+  option?: string | null;
+  /** Catalogue price delta for that choice — display only. */
+  optionDelta?: number;
 };
 
 type OrderSummaryProps = {
@@ -34,10 +38,11 @@ export function OrderSummary({
       <h2 className="text-eyebrow text-stone uppercase">Order summary</h2>
 
       <ul className="flex flex-col gap-5 border-y border-line py-6">
-        {lines.map(({ product, quantity }) => {
+        {lines.map(({ product, quantity, option, optionDelta }) => {
           const price = formatPriceParts(product);
+          const unit = product.price + (optionDelta ?? 0);
           return (
-            <li key={product.id} className="flex items-start gap-4">
+            <li key={`${product.id}:${option ?? ""}`} className="flex items-start gap-4">
               <Image
                 src={product.coverImage}
                 alt=""
@@ -51,10 +56,20 @@ export function OrderSummary({
                 <p className="font-serif text-title-sm">{product.name}</p>
                 <p className="mt-0.5 text-body-sm text-stone">
                   {typeLabels[product.type]}
+                  {option
+                    ? ` · ${product.options?.label ?? "Option"}: ${option}`
+                    : ""}
                   {quantity > 1 ? ` · Quantity ${quantity}` : ""}
                 </p>
               </div>
-              <p className="shrink-0 text-body tabular-nums">{price.current}</p>
+              <p className="shrink-0 text-body tabular-nums">
+                {price.original && !optionDelta ? (
+                  <span className="mr-1.5 text-stone line-through">
+                    {price.original}
+                  </span>
+                ) : null}
+                {`$${unit}`}
+              </p>
             </li>
           );
         })}

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth/guards";
+import { couponRepository } from "@/lib/repositories";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BUCKETS, isServiceRoleConfigured } from "@/lib/supabase/config";
 
@@ -126,6 +127,65 @@ export async function saveProductAction(
     errors,
   );
 
+  // Etsy-style option group: a label plus "name | price delta" lines.
+  // Leave both empty for a product that sells without a choice.
+  const optionLabel = text(formData, "optionLabel", 60);
+  const optionChoicesRaw = text(formData, "optionChoices", 2000);
+  let optionGroup: {
+    label: string;
+    choices: { name: string; priceDelta: number }[];
+  } | null = null;
+  if (optionLabel || optionChoicesRaw) {
+    const choices: { name: string; priceDelta: number }[] = [];
+    const seen = new Set<string>();
+    let optionError: string | null = null;
+    for (const rawLine of optionChoicesRaw.split("\n")) {
+      const line = rawLine.trim();
+      if (!line) continue;
+      const parts = line.split("|");
+      if (parts.length > 2) {
+        optionError = `Use "name | price delta" — one choice per line (offending: ${line})`;
+        break;
+      }
+      const name = (parts[0] ?? "").trim();
+      const deltaText = (parts[1] ?? "").trim() || "0";
+      const priceDelta = Number(deltaText);
+      if (!name) {
+        optionError = "Every choice needs a name before the |";
+        break;
+      }
+      if (name.length > 60) {
+        optionError = "Choice names are limited to 60 characters";
+        break;
+      }
+      if (!Number.isInteger(priceDelta) || priceDelta < -10000 || priceDelta > 10000) {
+        optionError = `Price delta for "${name}" must be a whole number (e.g. 0 or 5)`;
+        break;
+      }
+      if (seen.has(name.toLowerCase())) {
+        optionError = `Duplicate choice "${name}"`;
+        break;
+      }
+      seen.add(name.toLowerCase());
+      choices.push({ name, priceDelta });
+      if (choices.length > 20) {
+        optionError = "Maximum 20 choices";
+        break;
+      }
+    }
+    if (!optionError && choices.length === 0) {
+      optionError = "Add at least one choice, one per line";
+    }
+    if (!optionError && !optionLabel) {
+      optionError = "Add an option label (e.g. Colour)";
+    }
+    if (optionError) {
+      errors.optionChoices = optionError;
+    } else {
+      optionGroup = { label: optionLabel, choices };
+    }
+  }
+
   if (Object.keys(errors).length > 0) {
     return { ok: false, message: "Please fix the highlighted fields", fieldErrors: errors };
   }
@@ -157,10 +217,26 @@ export async function saveProductAction(
     price_from: formData.get("priceFrom") === "on",
     featured: formData.get("featured") === "on",
     published: formData.get("published") === "on",
+    options: optionGroup,
   };
 
+  // The options column arrives with migration 0003. Until it exists, the
+  // REST layer rejects the KEY (not the value), so the rest of the product
+  // still has to save — with a message that names the exact fix.
+  const missingOptionsColumn = (message: string) =>
+    message.includes("'options'");
+  const { options: _options, ...rowWithoutOptions } = row;
+  let optionsDeferred = false;
+
   if (id) {
-    const { error } = await admin.from("products").update(row).eq("id", id);
+    let { error } = await admin.from("products").update(row).eq("id", id);
+    if (error && missingOptionsColumn(error.message)) {
+      optionsDeferred = true;
+      ({ error } = await admin
+        .from("products")
+        .update(rowWithoutOptions)
+        .eq("id", id));
+    }
     if (error) {
       console.error("[admin:products] update failed:", error.message);
       return { ok: false, message: "Could not save the product" };
@@ -168,14 +244,30 @@ export async function saveProductAction(
     logAction("product_updated", "product", id, session.user.id, { slug });
     revalidatePath(`/admin/products/${id}`);
     revalidatePath("/admin/products");
+    if (optionsDeferred && optionGroup) {
+      return {
+        ok: false,
+        message:
+          "Everything except the options was saved. Run migration 0003_product_options.sql in the Supabase SQL editor, then save again to store the options.",
+      };
+    }
     return { ok: true, message: "Product saved" };
   }
 
-  const { data, error } = await admin
+  let inserted = await admin
     .from("products")
     .insert(row)
     .select("id")
     .single<{ id: string }>();
+  if (inserted.error && missingOptionsColumn(inserted.error.message)) {
+    optionsDeferred = true;
+    inserted = await admin
+      .from("products")
+      .insert(rowWithoutOptions)
+      .select("id")
+      .single<{ id: string }>();
+  }
+  const { data, error } = inserted;
 
   if (error || !data) {
     console.error("[admin:products] insert failed:", error?.message);
@@ -187,6 +279,13 @@ export async function saveProductAction(
 
   logAction("product_created", "product", data.id, session.user.id, { slug });
   revalidatePath("/admin/products");
+  if (optionsDeferred && optionGroup) {
+    return {
+      ok: false,
+      message:
+        "Product created, but the options were not saved. Run migration 0003_product_options.sql in the Supabase SQL editor, then edit and save the product again.",
+    };
+  }
   return { ok: true, message: "Product created", fieldErrors: {} };
 }
 
@@ -489,4 +588,106 @@ export async function getSetupGuideUrlAction(
 async function getSessionForDelivery() {
   const { getSession } = await import("@/lib/auth/guards");
   return getSession();
+}
+
+/* ------------------------------------------------------------------ */
+/* Coupons                                                             */
+/* ------------------------------------------------------------------ */
+
+const COUPON_CODE_PATTERN = /^[a-z0-9][a-z0-9_-]{2,39}$/;
+
+export async function createCouponAction(
+  _previous: ActionState | null,
+  formData: FormData,
+): Promise<ActionState> {
+  const session = await requireAdmin();
+
+  const errors: Record<string, string> = {};
+  const code = text(formData, "code", 40).toLowerCase();
+  const percentOff = Number(text(formData, "percentOff", 10));
+  const note = text(formData, "note", 120);
+  const maxRaw = text(formData, "maxRedemptions", 10);
+  const expiresRaw = text(formData, "expiresAt", 40);
+
+  if (!COUPON_CODE_PATTERN.test(code)) {
+    errors.code = "3–40 characters: letters, numbers, - or _ (no spaces)";
+  }
+  if (!Number.isInteger(percentOff) || percentOff < 1 || percentOff > 100) {
+    errors.percentOff = "Whole number between 1 and 100";
+  }
+  let maxRedemptions: number | null = null;
+  if (maxRaw) {
+    maxRedemptions = Number(maxRaw);
+    if (!Number.isInteger(maxRedemptions) || maxRedemptions < 1) {
+      errors.maxRedemptions = "Whole number of 1 or more (or leave empty)";
+    }
+  }
+  let expiresAt: string | null = null;
+  if (expiresRaw) {
+    const parsed = new Date(`${expiresRaw}T23:59:59`);
+    if (Number.isNaN(parsed.getTime())) {
+      errors.expiresAt = "Pick a valid date";
+    } else {
+      expiresAt = parsed.toISOString();
+    }
+  }
+  if (Object.keys(errors).length > 0) {
+    return {
+      ok: false,
+      message: "Please fix the highlighted fields",
+      fieldErrors: errors,
+    };
+  }
+
+  const created = await couponRepository.create({
+    code,
+    percentOff,
+    note: note || null,
+    maxRedemptions,
+    expiresAt,
+  });
+  if (!created) {
+    return {
+      ok: false,
+      message:
+        "Could not create the code — is it already used? On a fresh database, run migration 0004_coupons.sql in the Supabase SQL editor first.",
+    };
+  }
+
+  logAction("coupon_created", "coupon", created.id, session.user.id, {
+    code,
+    percentOff,
+  });
+  revalidatePath("/admin/coupons");
+  return { ok: true, message: `Code ${code} created — ${percentOff}% off` };
+}
+
+/** Plain-form action (no useActionState wrapper): FormData only. */
+export async function setCouponActiveAction(formData: FormData): Promise<void> {
+  const session = await requireAdmin();
+  const id = text(formData, "id", 64);
+  const active = formData.get("active") === "true";
+  if (!id) return;
+  const changed = await couponRepository.setActive(id, active);
+  if (changed) {
+    logAction(
+      active ? "coupon_activated" : "coupon_deactivated",
+      "coupon",
+      id,
+      session.user.id,
+    );
+  }
+  revalidatePath("/admin/coupons");
+}
+
+/** Plain-form action (no useActionState wrapper): FormData only. */
+export async function deleteCouponAction(formData: FormData): Promise<void> {
+  const session = await requireAdmin();
+  const id = text(formData, "id", 64);
+  if (!id) return;
+  const removed = await couponRepository.remove(id);
+  if (removed) {
+    logAction("coupon_deleted", "coupon", id, session.user.id);
+  }
+  revalidatePath("/admin/coupons");
 }

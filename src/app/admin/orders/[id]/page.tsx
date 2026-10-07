@@ -69,6 +69,9 @@ export default async function AdminOrderPage({
               <span className="min-w-0">
                 <span className="block">{item.productName}</span>
                 <span className="text-body-sm text-stone">
+                  {item.optionLabel && item.optionChoice
+                    ? `${item.optionLabel}: ${item.optionChoice} · `
+                    : ""}
                   {item.quantity} × {money(item.price)}
                 </span>
               </span>

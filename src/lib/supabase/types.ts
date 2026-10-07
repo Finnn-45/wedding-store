@@ -36,6 +36,8 @@ export type ProductRow = {
   features: unknown;
   whats_included: unknown;
   palette: unknown;
+  /** Etsy-style option group (0003); absent before that migration. */
+  options?: unknown;
   featured: boolean;
   published: boolean;
   created_at: string;
@@ -90,7 +92,24 @@ export type OrderItemRow = {
   product_slug: string | null;
   price: number | string;
   quantity: number;
+  /** Option snapshot (0003); absent before that migration. */
+  option_label?: string | null;
+  option_choice?: string | null;
   created_at: string;
+};
+
+/** Coupon row (0004) — service-role reads only, RLS has no public policy. */
+export type CouponRow = {
+  id: string;
+  code: string;
+  percent_off: number | string;
+  active: boolean;
+  note: string | null;
+  max_redemptions: number | null;
+  redemptions: number | string;
+  expires_at: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type PurchaseAccessRow = {

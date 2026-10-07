@@ -93,10 +93,16 @@ export default async function OrderSuccessPage(props: SuccessPageProps) {
 
         <ul className="mt-8 flex flex-col divide-y divide-line border-y border-line">
           {order.items.map((item) => (
-            <li key={item.productId} className="flex items-baseline justify-between gap-6 py-4">
+            <li
+              key={`${item.productId}:${item.optionChoice ?? ""}`}
+              className="flex items-baseline justify-between gap-6 py-4"
+            >
               <span className="min-w-0">
                 <span className="block font-serif text-title-sm">{item.productName}</span>
                 <span className="text-body-sm text-stone">
+                  {item.optionLabel && item.optionChoice
+                    ? `${item.optionLabel}: ${item.optionChoice} · `
+                    : ""}
                   Quantity {item.quantity} · ${item.price} each
                 </span>
               </span>

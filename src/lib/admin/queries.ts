@@ -384,12 +384,20 @@ export async function getAdminOrder(id: string) {
       product_name: string;
       price: number | string;
       quantity: number;
+      option_label?: string | null;
+      option_choice?: string | null;
     }[]).map((item) => ({
       id: item.id,
       productId: item.product_id,
       productName: item.product_name,
       price: num(item.price),
       quantity: item.quantity,
+      ...(item.option_choice
+        ? {
+            optionLabel: item.option_label ?? undefined,
+            optionChoice: item.option_choice,
+          }
+        : {}),
     })),
   };
 }

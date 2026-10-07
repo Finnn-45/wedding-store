@@ -14,6 +14,7 @@ export const adminNav: AdminNavItem[] = [
   { href: "/admin", label: "Dashboard", note: "Overview" },
   { href: "/admin/products", label: "Products", note: "Catalogue" },
   { href: "/admin/orders", label: "Orders", note: "Sales" },
+  { href: "/admin/coupons", label: "Coupons", note: "Discounts" },
   { href: "/admin/customers", label: "Customers", note: "Accounts" },
   { href: "/admin/delivery", label: "Delivery", note: "Assets" },
 ];
