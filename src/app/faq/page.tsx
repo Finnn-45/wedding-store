@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { Accordion } from "@/components/ui/Accordion";
 import { Button } from "@/components/ui/Button";
@@ -23,16 +24,23 @@ const faqJsonLd = {
   })),
 };
 
-export default function FaqPage() {
+export default async function FaqPage() {
   const items = faqs.map((faq) => ({
     title: faq.question,
     content: faq.answer,
   }));
 
+  // The CSP is nonce-gated (no unsafe-inline for scripts), so this inline
+  // JSON-LD must carry the per-request nonce set by the proxy or the browser
+  // will block it. Undefined only if the proxy did not run (e.g. static
+  // prerender during build) — the script is then inert SEO data, safe to emit.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <>
       <script
         type="application/ld+json"
+        nonce={nonce}
         // Constant data, but hardened anyway: escaping "<" means no string
         // can ever close the script element (standard inline-JSON guard).
         dangerouslySetInnerHTML={{

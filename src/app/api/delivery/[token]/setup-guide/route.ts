@@ -17,7 +17,7 @@ export async function GET(
 ) {
   const forwarded = request.headers.get("x-forwarded-for");
   const clientIp = forwarded?.split(",")[0]?.trim() || "unknown";
-  const limit = rateLimit(`delivery:${clientIp}`, DELIVERY_RATE);
+  const limit = await rateLimit(`delivery:${clientIp}`, DELIVERY_RATE);
   if (!limit.ok) {
     return new Response("Too many requests", {
       status: 429,

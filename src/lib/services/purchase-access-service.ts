@@ -1,14 +1,11 @@
 import { randomBytes } from "node:crypto";
 import type { Order, Product } from "@/lib/repositories";
 import {
+  deliveryAssetRepository,
   orderRepository,
   purchaseAccessRepository,
   productRepository,
 } from "@/lib/repositories";
-import {
-  getDeliveryAssets,
-  hasDeliveryAssets,
-} from "@/lib/private/delivery-assets";
 
 /**
  * Purchase access layer — the ONLY door to delivery assets.
@@ -133,7 +130,12 @@ class MockPurchaseAccessService implements PurchaseAccessService {
     if ("state" in verified) return verified;
 
     const product = await productRepository.getById(verified.productId);
-    if (!product || !hasDeliveryAssets(product.id)) {
+    // Resolve the delivery asset up front so an unconfigured product is
+    // reported as "asset_missing" here, not as a broken button later.
+    const asset = await deliveryAssetRepository.getByProductId(
+      verified.productId,
+    );
+    if (!product || !asset) {
       return { state: "asset_missing", message: FAILURES.asset_missing };
     }
 
@@ -149,25 +151,30 @@ class MockPurchaseAccessService implements PurchaseAccessService {
       orderNumber: verified.order.orderNumber,
       purchasedAt: verified.order.paidAt ?? verified.order.createdAt,
       // Token-scoped internal routes. The browser never sees the real Canva
-      // URL or the real PDF path — the server re-verifies on every request.
+      // URL or the real (signed) PDF URL — the server re-verifies on every
+      // request, then resolves the asset freshly through the repository.
       canvaAccessPath: `/api/delivery/${token}/canva`,
       setupGuidePath: `/api/delivery/${token}/setup-guide`,
-      canvaLabel: getDeliveryAssets(product.id).canvaLabel,
+      canvaLabel: "Open in Canva",
     };
   }
 
   async getCanvaTemplateAccess(token: string): Promise<string | null> {
     const verified = await this.verify(token);
     if ("state" in verified) return null;
-    if (!hasDeliveryAssets(verified.productId)) return null;
-    return getDeliveryAssets(verified.productId).canvaTemplateUrl;
+    const asset = await deliveryAssetRepository.getByProductId(
+      verified.productId,
+    );
+    return asset?.canvaTemplateUrl ?? null;
   }
 
   async getSetupGuideAccess(token: string): Promise<string | null> {
     const verified = await this.verify(token);
     if ("state" in verified) return null;
-    if (!hasDeliveryAssets(verified.productId)) return null;
-    return getDeliveryAssets(verified.productId).setupPdfUrl;
+    const asset = await deliveryAssetRepository.getByProductId(
+      verified.productId,
+    );
+    return asset?.setupGuideUrl ?? null;
   }
 }
 

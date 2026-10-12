@@ -238,9 +238,23 @@ function orderId(): string {
  * purchase flow on a private deployment. A real provider (Stripe / Midtrans /
  * Xendit + webhook) replaces this check along with the service itself.
  */
+let mockCheckoutWarned = false;
+
 function isMockCheckoutEnabled(): boolean {
   if (process.env.NODE_ENV !== "production") return true;
-  return process.env.ENABLE_MOCK_CHECKOUT === "true";
+
+  const enabled = process.env.ENABLE_MOCK_CHECKOUT === "true";
+  if (enabled && !mockCheckoutWarned) {
+    // Loud, once per process: a production deploy with mock payments hands out
+    // paid files without taking money. Make it impossible to miss in the logs.
+    mockCheckoutWarned = true;
+    console.warn(
+      "[checkout] ⚠️  ENABLE_MOCK_CHECKOUT=true in PRODUCTION. Every order " +
+        "will be marked paid and issued files with NO payment taken. Unset it " +
+        "for a real storefront.",
+    );
+  }
+  return enabled;
 }
 
 export function createCheckoutService({

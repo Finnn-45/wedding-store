@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   // Abuse control first: everything below costs disk or CPU.
   const forwarded = request.headers.get("x-forwarded-for");
   const clientIp = forwarded?.split(",")[0]?.trim() || "unknown";
-  const limit = rateLimit(`checkout:${clientIp}`, CHECKOUT_RATE);
+  const limit = await rateLimit(`checkout:${clientIp}`, CHECKOUT_RATE);
   if (!limit.ok) {
     return NextResponse.json(
       { ok: false, code: "rate_limited" },

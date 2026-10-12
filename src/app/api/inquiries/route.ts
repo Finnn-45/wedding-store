@@ -18,7 +18,7 @@ const INQUIRY_RATE = { max: 10, windowMs: 10 * 60_000 };
 export async function POST(request: Request) {
   const forwarded = request.headers.get("x-forwarded-for");
   const clientIp = forwarded?.split(",")[0]?.trim() || "unknown";
-  const limit = rateLimit(`inquiry:${clientIp}`, INQUIRY_RATE);
+  const limit = await rateLimit(`inquiry:${clientIp}`, INQUIRY_RATE);
   if (!limit.ok) {
     return NextResponse.json(
       { ok: false, code: "rate_limited" },

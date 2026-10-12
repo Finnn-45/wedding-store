@@ -13,10 +13,12 @@
  * Server only: client components must never import this module.
  */
 import { mockCouponRepository } from "@/lib/mock/coupon-repository";
+import { mockDeliveryAssetRepository } from "@/lib/mock/delivery-asset-repository";
 import { mockOrderRepository } from "@/lib/mock/order-repository";
 import { mockProductRepository } from "@/lib/mock/product-repository";
 import { mockPurchaseAccessRepository } from "@/lib/mock/purchase-access-repository";
 import type { CouponRepository } from "@/lib/repositories/coupon-repository";
+import type { DeliveryAssetRepository } from "@/lib/repositories/delivery-asset-repository";
 import type {
   OrderRepository,
   PurchaseAccessRepository,
@@ -24,6 +26,7 @@ import type {
 import type { ProductRepository } from "@/lib/repositories/product-repository";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { supabaseCouponRepository } from "@/lib/supabase/repositories/coupon-repository";
+import { supabaseDeliveryAssetRepository } from "@/lib/supabase/repositories/delivery-asset-repository";
 import { supabaseOrderRepository } from "@/lib/supabase/repositories/order-repository";
 import { supabaseProductRepository } from "@/lib/supabase/repositories/product-repository";
 import { supabasePurchaseAccessRepository } from "@/lib/supabase/repositories/purchase-access-repository";
@@ -32,6 +35,10 @@ export type {
   Coupon,
   CouponRepository,
 } from "@/lib/repositories/coupon-repository";
+export type {
+  DeliveryAssetRepository,
+  ResolvedDeliveryAsset,
+} from "@/lib/repositories/delivery-asset-repository";
 export type {
   Order,
   OrderItem,
@@ -65,4 +72,8 @@ export const purchaseAccessRepository: PurchaseAccessRepository = usingSupabase
 export const couponRepository: CouponRepository = usingSupabase
   ? supabaseCouponRepository
   : mockCouponRepository;
+
+export const deliveryAssetRepository: DeliveryAssetRepository = usingSupabase
+  ? supabaseDeliveryAssetRepository
+  : mockDeliveryAssetRepository;
 
